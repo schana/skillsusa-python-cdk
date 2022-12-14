@@ -1,8 +1,10 @@
 from aws_cdk import (
     RemovalPolicy,
     CfnOutput,
+    aws_certificatemanager as certificatemanager,
     aws_cognito as cognito,
     aws_s3 as s3,
+    aws_s3_deployment as s3_deployment,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as cloudfront_origins,
     aws_iam as iam,
@@ -21,8 +23,15 @@ class StaticSite(Construct):
             "StaticSiteBucket",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
-            versioned=True,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
+        s3_deployment.BucketDeployment(
+            self,
+            "StaticSiteDeployment",
+            destination_bucket=static_site_bucket,
+            sources=[s3_deployment.Source.asset("app/website/out")],
+            retain_on_delete=False,
         )
 
         origin_access_identity = cloudfront.OriginAccessIdentity(
@@ -33,6 +42,12 @@ class StaticSite(Construct):
         distribution = cloudfront.Distribution(
             self,
             "Distribution",
+            domain_names=["sneks.dev", "www.sneks.dev"],
+            certificate=certificatemanager.Certificate.from_certificate_arn(
+                self,
+                "Certificate",
+                "arn:aws:acm:us-east-1:397418712227:certificate/975cb4d7-c571-4091-9ccc-08de5322dc2a",
+            ),
             default_behavior=cloudfront.BehaviorOptions(
                 origin=cloudfront_origins.S3Origin(
                     bucket=static_site_bucket,
@@ -44,7 +59,7 @@ class StaticSite(Construct):
             error_responses=[
                 cloudfront.ErrorResponse(
                     http_status=404,
-                    response_page_path="/notfound.html",
+                    response_page_path="/404.html",
                 ),
             ],
             price_class=cloudfront.PriceClass.PRICE_CLASS_100,
@@ -74,11 +89,11 @@ class StaticSite(Construct):
             deletion_protection=True,
             self_sign_up_enabled=False,
             email=cognito.UserPoolEmail.with_cognito(
-                reply_to="",
+                reply_to="schaafna@gmail.com",
             ),
             user_invitation=cognito.UserInvitationConfig(
-                email_subject="",
-                email_body="",
+                email_subject="SkillsUSA programming challenge invite",
+                email_body="This is an invite for {username} to the SkillsUSA programming challenge. Your temporary password is: {####}",
             ),
         )
 
@@ -86,7 +101,7 @@ class StaticSite(Construct):
             "LambdaAtEdge",
             generate_secret=True,
             o_auth=cognito.OAuthSettings(
-                callback_urls=[f"https://{distribution.distribution_domain_name}"],
+                callback_urls=[f"https://example.com/will-be-replaced"],
                 flows=cognito.OAuthFlows(
                     authorization_code_grant=True,
                 ),

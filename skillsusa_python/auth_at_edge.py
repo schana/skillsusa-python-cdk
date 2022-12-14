@@ -27,10 +27,7 @@ class AuthAtEdge(Construct):
         sign_out_url = "/signout"
         redirect_path_sign_out = "/"
 
-        o_auth_scopes = [
-            "email",
-            "aws.cognito.signin.user.admin",
-        ]
+        o_auth_scopes = ["email", "aws.cognito.signin.user.admin", "openid"]
 
         auth_at_edge = sam.CfnApplication(
             self,
@@ -47,6 +44,8 @@ class AuthAtEdge(Construct):
                 OAuthScopes=",".join(o_auth_scopes),
                 RedirectPathAuthRefresh=redirect_path_auth_refresh,
                 RedirectPathSignIn=redirect_path_sign_in,
+                RewritePathWithTrailingSlashToIndex="true",
+                AlternateDomainNames="www.sneks.dev,sneks.dev",
                 SignOutUrl=sign_out_url,
                 Version="2.1.5",
             ),
@@ -97,18 +96,24 @@ class AuthAtEdge(Construct):
                 RedirectPathSignIn=redirect_path_sign_in,
                 RedirectPathSignOut=redirect_path_sign_out,
                 AlternateDomainNames="",
-                OAuthScopes=",".join(o_auth_scopes),
+                OAuthScopes=o_auth_scopes,
             ),
         )
 
-        cloudfront.LambdaFunctionAssociation(
-            event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-            lambda_function=check_auth_handler,
-        )
+        default_behaviors = [
+            dict(
+                EventType=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
+                LambdaFunctionARN=check_auth_handler.function_arn,
+            ),
+            dict(
+                EventType=cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
+                LambdaFunctionARN=trailing_slash_handler.function_arn,
+            ),
+        ]
 
-        cloudfront.LambdaFunctionAssociation(
-            event_type=cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
-            lambda_function=trailing_slash_handler,
+        distribution.node.default_child.add_property_override(
+            "DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations",
+            default_behaviors,
         )
 
         dummy_origin = cloudfront_origins.HttpOrigin("example.com")
