@@ -11,7 +11,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from skillsusa_python.auth_at_edge import AuthAtEdge
+from sneks.auth_at_edge import AuthAtEdge
 
 
 class StaticSite(Construct):

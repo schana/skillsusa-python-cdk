@@ -7,12 +7,12 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from skillsusa_python.static_site import StaticSite
+from sneks.static_site import StaticSite
 
 name = "SkillsUSA"
 
 
-class SkillsusaPythonStack(Stack):
+class SneksStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -20,7 +20,7 @@ class SkillsusaPythonStack(Stack):
 
         submission_bucket = s3.Bucket(
             self,
-            f"{name}SubmissionBucket",
+            "SubmissionBucket",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
             versioned=True,
@@ -29,7 +29,7 @@ class SkillsusaPythonStack(Stack):
 
         results_bucket = s3.Bucket(
             self,
-            f"{name}ResultsBucket",
+            "ResultsBucket",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
             versioned=True,
@@ -38,7 +38,7 @@ class SkillsusaPythonStack(Stack):
 
         processor = lambda_python.PythonFunction(
             self,
-            f"{name}Processor",
+            "Processor",
             runtime=lambda_.Runtime.PYTHON_3_9,
             entry="./app/processor",
             index="main.py",
