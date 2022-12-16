@@ -14,9 +14,6 @@ export default () => {
             <li>
               <a href="">Link to documentation</a>
             </li>
-            <li>
-              <a href="">Link to documentation</a>
-            </li>
           </ul>
         </div>
       }
@@ -31,7 +28,6 @@ export default () => {
         <h3>h3 section header</h3>
         <ul>
           <li>Unordered list item.</li>
-          <li>Unordered list item.</li>
         </ul>
 
         <h4>h4 section header</h4>
@@ -44,8 +40,6 @@ export default () => {
         <dl>
           <dt>This is a term</dt>
           <dd>This is its description.</dd>
-          <dt>This is a term</dt>
-          <dd>This is its description</dd>
         </dl>
       </div>
     </HelpPanel>

@@ -18,9 +18,9 @@ import SneksHeader from "./components/header";
 
 Amplify.configure({
   Auth: {
-    region: "us-east-1", // REQUIRED - Amazon Cognito Region
-    userPoolId: "us-east-1_5qPGQ7PVq", //OPTIONAL - Amazon Cognito User Pool ID
-    userPoolWebClientId: "5ffs1d5kpodcljl7in0jj771fm",
+    region: "us-east-1",
+    userPoolId: "us-east-1_eZFTqLvVz",
+    userPoolWebClientId: "2jq7btif1lilr4np3p4vqc6das",
   },
   Storage: {
     AWSS3: {

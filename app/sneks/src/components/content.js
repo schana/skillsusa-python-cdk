@@ -22,7 +22,7 @@ export default () => {
             </Header>
           }
         >
-          <Authenticator hideSignUp={true} />
+          <Authenticator hideSignUp={true} loginMechanisms={["email"]} />
         </Container>
       ) : (
         <Container

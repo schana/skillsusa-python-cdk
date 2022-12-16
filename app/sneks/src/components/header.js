@@ -26,7 +26,7 @@ export default () => {
           ? [
               {
                 type: "button",
-                text: `${Auth.user.username} (${Auth.user.attributes.email})`,
+                text: `${Auth.user.attributes.email}`,
                 iconName: "user-profile",
               },
               {
@@ -54,8 +54,6 @@ export default () => {
         overflowMenuBackIconAriaLabel: "Back",
         overflowMenuDismissIconAriaLabel: "Close menu",
       }}
-    >
-      <Toggle>asdf</Toggle>
-    </TopNavigation>
+    />
   );
 };
