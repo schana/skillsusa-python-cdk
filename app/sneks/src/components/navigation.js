@@ -3,14 +3,12 @@ import SideNavigation from "@cloudscape-design/components/side-navigation";
 import Badge from "@cloudscape-design/components/badge";
 
 export default () => {
-  const [activeHref, setActiveHref] = React.useState(
-    "#/page1"
-  );
+  const [activeHref, setActiveHref] = React.useState("#/page1");
   return (
     <SideNavigation
       activeHref={activeHref}
       header={{ href: "#/", text: "Service name" }}
-      onFollow={event => {
+      onFollow={(event) => {
         if (!event.detail.external) {
           event.preventDefault();
           setActiveHref(event.detail.href);
@@ -26,15 +24,15 @@ export default () => {
           type: "link",
           text: "Notifications",
           href: "#/notifications",
-          info: <Badge color="red">23</Badge>
+          info: <Badge color="red">23</Badge>,
         },
         {
           type: "link",
           text: "Documentation",
           href: "https://example.com",
-          external: true
-        }
+          external: true,
+        },
       ]}
     />
   );
-}
+};

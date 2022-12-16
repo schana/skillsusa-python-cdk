@@ -24,8 +24,8 @@ export default () => {
     >
       <div>
         <p>
-          This is a paragraph with some <b>bold text</b>{" "}
-          and also some <i>italic text</i>.
+          This is a paragraph with some <b>bold text</b> and also some{" "}
+          <i>italic text</i>.
         </p>
 
         <h3>h3 section header</h3>
@@ -36,9 +36,8 @@ export default () => {
 
         <h4>h4 section header</h4>
         <p>
-          Code can be formatted as lines of code or blocks
-          of code. Add inline code <code>like this</code>{" "}
-          using a <code>{"<code>"}</code> tag.
+          Code can be formatted as lines of code or blocks of code. Add inline
+          code <code>like this</code> using a <code>{"<code>"}</code> tag.
         </p>
 
         <h5>h5 section header</h5>
@@ -51,4 +50,4 @@ export default () => {
       </div>
     </HelpPanel>
   );
-}
+};
