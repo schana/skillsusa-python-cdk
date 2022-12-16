@@ -9,8 +9,6 @@ from constructs import Construct
 
 from sneks.static_site import StaticSite
 
-name = "SkillsUSA"
-
 
 class SneksStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:

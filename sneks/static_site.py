@@ -11,8 +11,6 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from sneks.auth_at_edge import AuthAtEdge
-
 
 class StaticSite(Construct):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
@@ -30,7 +28,7 @@ class StaticSite(Construct):
             self,
             "StaticSiteDeployment",
             destination_bucket=static_site_bucket,
-            sources=[s3_deployment.Source.asset("app/website/out")],
+            sources=[s3_deployment.Source.asset("app/sneks/build")],
             retain_on_delete=False,
         )
 
@@ -89,7 +87,7 @@ class StaticSite(Construct):
             deletion_protection=True,
             self_sign_up_enabled=False,
             email=cognito.UserPoolEmail.with_cognito(
-                reply_to="schaafna@gmail.com",
+                reply_to="admin@sneks.dev",
             ),
             user_invitation=cognito.UserInvitationConfig(
                 email_subject="SkillsUSA programming challenge invite",

@@ -1,40 +1,76 @@
-import logo from './logo.svg';
-import './App.css';
+import {useState} from "react";
 
 import { Amplify } from 'aws-amplify';
 
-import { withAuthenticator } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
+import AppLayout from "@cloudscape-design/components/app-layout";
 
-//import awsExports from './aws-exports';
-//Amplify.configure(awsExports);
+import Content from "./components/content";
+import Navigation from "./components/navigation";
+import Tools from "./components/tools";
+import Notifications from "./components/notifications";
+
+import "@cloudscape-design/global-styles/index.css"
+import '@aws-amplify/ui-react/styles.css';
+import './App.css';
+
 Amplify.configure({
     Auth: {
         region: 'us-east-1', // REQUIRED - Amazon Cognito Region
         userPoolId: 'us-east-1_5qPGQ7PVq', //OPTIONAL - Amazon Cognito User Pool ID
         userPoolWebClientId: '5ffs1d5kpodcljl7in0jj771fm',
+    },
+    Storage: {
+        AWSS3: {
+            bucket: '',
+            region: 'us-east-1'
+        }
     }
 });
 
-function App({ signOut, user }) {
+/*
+import AppLayout from '@awsui/components-react/app-layout';
+import { useAppLayout } from 'use-awsui';
+import { Breadcrumbs, Content, Navigation, Tools } from './components';
+
+export default function MyApp() {
+  const {
+    handleNavigationChange,
+    handleToolsChange,
+    navigationOpen,
+    toolsOpen,
+  } = useAppLayout({
+    defaultNavigationOpen: true,
+    defaultToolsOpen: false,
+  });
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload, {user.username}.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AppLayout
+      breadcrumbs={<Breadcrumbs />}
+      content={<Content />}
+      contentType="table"
+      navigation={<Navigation />}
+      navigationOpen={navigationOpen}
+      onNavigationChange={handleNavigationChange}
+      onToolsChange={handleToolsChange}
+      tools={<Tools />}
+      toolsOpen={toolsOpen}
+    />
   );
 }
+*/
 
-export default withAuthenticator(App);
+export default function App() {
+  const [onToolsToggle] = useState(true);
+  return (
+
+  <AppLayout
+    toolsOpen={true}
+    onToolsChange={({detail}) => onToolsToggle(detail.open)}
+    navigation={<Navigation />}
+    notifications={<Notifications />}
+    tools={<Tools />}
+    content={<Content />}
+  />
+
+  );
+}
