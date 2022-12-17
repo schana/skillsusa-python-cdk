@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Root from "./components/root";
-import "@cloudscape-design/global-styles/dark-mode-utils.css";
 
 const router = createBrowserRouter([
   {

@@ -2,12 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import TopNavigation from "@cloudscape-design/components/top-navigation";
-//import Toggle from "@cloudscape-design/components/toggle";
-//import { applyMode, Mode } from "@cloudscape-design/global-styles";
 import { Auth } from "aws-amplify";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 
-export default function Header() {
+export default function Header(props) {
   const { authStatus } = useAuthenticator((context) => [context.authStatus]);
   const navigate = useNavigate();
 
@@ -24,6 +22,17 @@ export default function Header() {
           href: "https://example.com/",
           external: true,
           externalIconAriaLabel: " (opens in a new tab)",
+        },
+        {
+          type: "button",
+          text: "toggle mode",
+          onClick: () => {
+            if (props.mode === "dark") {
+              props.setMode("light");
+            } else {
+              props.setMode("dark");
+            }
+          },
         },
         ...(authStatus === "authenticated"
           ? [

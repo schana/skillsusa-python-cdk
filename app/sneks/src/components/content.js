@@ -11,7 +11,25 @@ export default function Content() {
   const element = useRoutes([
     {
       path: "/",
-      element: <Container>home</Container>,
+      element: (
+        <ContentLayout
+          header={
+            <Header variant="h1" description="header description">
+              Home
+            </Header>
+          }
+        >
+          <Container
+            header={
+              <Header variant="h2" description="container description">
+                container header
+              </Header>
+            }
+          >
+            home
+          </Container>
+        </ContentLayout>
+      ),
     },
     {
       path: "signin",
@@ -25,7 +43,23 @@ export default function Content() {
       path: "scores",
       element: (
         <AuthGuard>
-          <Container>scores</Container>
+          <ContentLayout
+            header={
+              <Header variant="h1" description="header description">
+                Scores
+              </Header>
+            }
+          >
+            <Container
+              header={
+                <Header variant="h2" description="container description">
+                  container header
+                </Header>
+              }
+            >
+              scores
+            </Container>
+          </ContentLayout>
         </AuthGuard>
       ),
     },
@@ -33,10 +67,10 @@ export default function Content() {
       path: "submit",
       element: (
         <AuthGuard>
-          <Container
+          <ContentLayout
             header={
               <Header
-                variant="h2"
+                variant="h1"
                 description="You can upload as many times as you want during the competition"
               >
                 Upload your submission
@@ -48,7 +82,7 @@ export default function Content() {
               acceptedFileTypes={[".py", ".txt"]}
               variation="drop"
             />
-          </Container>
+          </ContentLayout>
         </AuthGuard>
       ),
     },

@@ -3,9 +3,6 @@ import * as React from "react";
 import { Amplify } from "aws-amplify";
 import { Authenticator } from "@aws-amplify/ui-react";
 
-import "@cloudscape-design/global-styles/index.css";
-import "@aws-amplify/ui-react/styles.css";
-
 import App from "../App";
 
 Amplify.configure({

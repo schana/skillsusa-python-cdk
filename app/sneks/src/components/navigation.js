@@ -5,6 +5,9 @@ import SideNavigation from "@cloudscape-design/components/side-navigation";
 export default function Navigation() {
   const location = useLocation();
   const [activeHref, setActiveHref] = React.useState(location.pathname);
+  React.useEffect(() => {
+    setActiveHref(location.pathname);
+  }, [location]);
   const navigate = useNavigate();
 
   return (
