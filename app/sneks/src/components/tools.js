@@ -2,7 +2,7 @@ import * as React from "react";
 import HelpPanel from "@cloudscape-design/components/help-panel";
 import Icon from "@cloudscape-design/components/icon";
 
-export default () => {
+export default function Tools() {
   return (
     <HelpPanel
       footer={
@@ -12,7 +12,7 @@ export default () => {
           </h3>
           <ul>
             <li>
-              <a href="">Link to documentation</a>
+              <a href="/">Link to documentation</a>
             </li>
           </ul>
         </div>
@@ -44,4 +44,4 @@ export default () => {
       </div>
     </HelpPanel>
   );
-};
+}

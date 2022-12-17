@@ -1,22 +1,27 @@
 import * as React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import SideNavigation from "@cloudscape-design/components/side-navigation";
-import Badge from "@cloudscape-design/components/badge";
 
-export default () => {
-  const [activeHref, setActiveHref] = React.useState("#/");
+export default function Navigation() {
+  const location = useLocation();
+  const [activeHref, setActiveHref] = React.useState(location.pathname);
+  const navigate = useNavigate();
+
   return (
     <SideNavigation
       activeHref={activeHref}
-      header={{ href: "#/", text: "Sneks" }}
+      header={{ href: "/", text: "Navigation" }}
       onFollow={(event) => {
         if (!event.detail.external) {
           event.preventDefault();
           setActiveHref(event.detail.href);
+          navigate(event.detail.href);
         }
       }}
       items={[
-        { type: "link", text: "Results", href: "#/" },
-        { type: "link", text: "Submit", href: "#/submit" },
+        { type: "link", text: "Home", href: "/" },
+        { type: "link", text: "Scores", href: "/scores" },
+        { type: "link", text: "Submit", href: "/submit" },
         { type: "divider" },
         {
           type: "link",
@@ -27,4 +32,4 @@ export default () => {
       ]}
     />
   );
-};
+}

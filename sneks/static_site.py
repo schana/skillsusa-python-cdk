@@ -1,5 +1,6 @@
 from aws_cdk import (
     CfnOutput,
+    Duration,
     RemovalPolicy,
     aws_certificatemanager as certificate_manager,
     aws_cognito as cognito,
@@ -42,8 +43,10 @@ class StaticSite(Construct):
             default_root_object="index.html",
             error_responses=[
                 cloudfront.ErrorResponse(
-                    http_status=404,
-                    response_page_path="/404.html",
+                    http_status=403,
+                    response_http_status=200,
+                    response_page_path="/index.html",
+                    ttl=Duration.millis(0),
                 ),
             ],
             price_class=cloudfront.PriceClass.PRICE_CLASS_100,

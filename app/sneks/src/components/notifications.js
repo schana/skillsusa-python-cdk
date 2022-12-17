@@ -1,9 +1,9 @@
 import * as React from "react";
 import Flashbar from "@cloudscape-design/components/flashbar";
-import Link from "@cloudscape-design/components/link";
+//import Link from "@cloudscape-design/components/link";
 
-export default () => {
-  const [items, setItems] = React.useState();
+export default function Notifications() {
+  //  const [items, setItems] = React.useState();
   //    {
   //      type: "info",
   //      dismissible: true,
@@ -18,5 +18,5 @@ export default () => {
   //      id: "message_1",
   //    },
   //  ]);
-  return <Flashbar items={items} />;
-};
+  return <Flashbar items={[]} />;
+}

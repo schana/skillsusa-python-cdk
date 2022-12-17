@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+
 import TopNavigation from "@cloudscape-design/components/top-navigation";
-import Toggle from "@cloudscape-design/components/toggle";
-import { applyMode, Mode } from "@cloudscape-design/global-styles";
+//import Toggle from "@cloudscape-design/components/toggle";
+//import { applyMode, Mode } from "@cloudscape-design/global-styles";
 import { Auth } from "aws-amplify";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 
-export default () => {
+export default function Header() {
   const { authStatus } = useAuthenticator((context) => [context.authStatus]);
+  const navigate = useNavigate();
 
   return (
     <TopNavigation
@@ -43,6 +46,9 @@ export default () => {
                 type: "button",
                 variant: "primary-button",
                 text: "Sign in",
+                onClick: () => {
+                  navigate("/signin");
+                },
               },
             ]),
       ]}
@@ -56,4 +62,4 @@ export default () => {
       }}
     />
   );
-};
+}
