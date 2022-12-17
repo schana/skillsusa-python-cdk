@@ -4,8 +4,10 @@ from aws_cdk import (
     RemovalPolicy,
     aws_certificatemanager as certificate_manager,
     aws_cognito as cognito,
+    aws_cognito_identitypool_alpha as cognito_identity,
     aws_s3 as s3,
     aws_s3_deployment as s3_deployment,
+    aws_ssm as ssm,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as cloudfront_origins,
 )
@@ -13,7 +15,13 @@ from constructs import Construct
 
 
 class StaticSite(Construct):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        submission_bucket: s3.Bucket,
+        **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         static_site_bucket = s3.Bucket(
@@ -32,7 +40,7 @@ class StaticSite(Construct):
             certificate=certificate_manager.Certificate.from_certificate_arn(
                 self,
                 "Certificate",
-                "arn:aws:acm:us-east-1:397418712227:certificate/975cb4d7-c571-4091-9ccc-08de5322dc2a",
+                ssm.StringParameter.value_for_string_parameter(self, "certificate-arn"),
             ),
             default_behavior=cloudfront.BehaviorOptions(
                 origin=cloudfront_origins.S3Origin(
@@ -91,6 +99,22 @@ class StaticSite(Construct):
             prevent_user_existence_errors=False,
         )
 
+        identity_pool = cognito_identity.IdentityPool(
+            self,
+            "IdentityPool",
+            authentication_providers=cognito_identity.IdentityPoolAuthenticationProviders(
+                user_pools=[
+                    cognito_identity.UserPoolAuthenticationProvider(
+                        user_pool=user_pool,
+                        user_pool_client=user_pool_client,
+                        disable_server_side_token_check=False,
+                    )
+                ],
+            ),
+        )
+
+        submission_bucket.grant_put(identity_pool.authenticated_role)
+
         CfnOutput(
             self,
             "SneksCloudFrontDomain",
@@ -110,4 +134,11 @@ class StaticSite(Construct):
             "SneksCognitoUserPoolClientId",
             value=user_pool_client.user_pool_client_id,
             export_name="SneksCognitoUserPoolClientId",
+        )
+
+        CfnOutput(
+            self,
+            "SneksCognitoIdentityPoolId",
+            value=identity_pool.identity_pool_id,
+            export_name="SneksCognitoIdentityPoolId",
         )

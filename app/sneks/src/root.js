@@ -3,21 +3,11 @@ import * as React from "react";
 import { Amplify } from "aws-amplify";
 import { Authenticator } from "@aws-amplify/ui-react";
 
-import App from "../App";
+import App from "./App";
 
-Amplify.configure({
-  Auth: {
-    region: "us-east-1",
-    userPoolId: "us-east-1_eZFTqLvVz",
-    userPoolWebClientId: "2jq7btif1lilr4np3p4vqc6das",
-  },
-  Storage: {
-    AWSS3: {
-      bucket: "",
-      region: "us-east-1",
-    },
-  },
-});
+import { config } from "./aws-config";
+
+Amplify.configure(config);
 
 export default function Root() {
   return (
