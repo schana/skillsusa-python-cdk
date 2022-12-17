@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { useLocalStorage } from "./hooks";
+
 import { ThemeProvider, defaultDarkModeOverride } from "@aws-amplify/ui-react";
 
 import { applyMode, Mode } from "@cloudscape-design/global-styles";
@@ -23,7 +25,15 @@ export default function App() {
     name: "my-theme",
     overrides: [defaultDarkModeOverride],
   };
-  const [amplifyColorMode, setAmplifyColorMode] = React.useState("light");
+  const [amplifyColorMode, setAmplifyColorMode] = useLocalStorage(
+    "mode",
+    "light"
+  );
+  if (amplifyColorMode === "dark") {
+    applyMode(Mode.Dark);
+  } else {
+    applyMode(Mode.Light);
+  }
 
   function setMode(mode) {
     if (mode === "dark") {
@@ -35,7 +45,8 @@ export default function App() {
     }
   }
 
-  //  const [toolsOpen, setToolsOpen] = useState(true);
+  const [toolsOpen, setToolsOpen] = useLocalStorage("toolsOpen", false);
+  const [navOpen, setNavOpen] = useLocalStorage("navOpen", true);
   return (
     <ThemeProvider theme={theme} colorMode={amplifyColorMode}>
       <div id="h" style={{ position: "sticky", top: 0, zIndex: 1002 }}>
@@ -43,8 +54,10 @@ export default function App() {
       </div>
       <AppLayout
         headerSelector="#h"
-        //        toolsOpen={toolsOpen}
-        //        onToolsChange={(evt) => setToolsOpen(evt.detail.open)}
+        toolsOpen={toolsOpen}
+        onToolsChange={(evt) => setToolsOpen(evt.detail.open)}
+        navigationOpen={navOpen}
+        onNavigationChange={(evt) => setNavOpen(evt.detail.open)}
         navigation={<Navigation />}
         notifications={<Notifications />}
         tools={<Tools />}
