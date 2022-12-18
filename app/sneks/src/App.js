@@ -46,7 +46,7 @@ export default function App() {
   }
 
   const [toolsOpen, setToolsOpen] = useLocalStorage("toolsOpen", false);
-  const [navOpen, setNavOpen] = useLocalStorage("navOpen", true);
+  const [navOpen, setNavOpen] = useLocalStorage("navOpen", false);
   return (
     <ThemeProvider theme={theme} colorMode={amplifyColorMode}>
       <div id="h" style={{ position: "sticky", top: 0, zIndex: 1002 }}>

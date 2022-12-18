@@ -5,27 +5,20 @@ import TopNavigation from "@cloudscape-design/components/top-navigation";
 import { Auth } from "aws-amplify";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 
-export default function Header(props) {
+export default function SneksHeader(props) {
   const { authStatus } = useAuthenticator((context) => [context.authStatus]);
   const navigate = useNavigate();
 
   return (
     <TopNavigation
       identity={{
-        href: "#",
+        href: "/",
         title: "Sneks",
       }}
       utilities={[
         {
           type: "button",
-          text: "Link",
-          href: "https://example.com/",
-          external: true,
-          externalIconAriaLabel: " (opens in a new tab)",
-        },
-        {
-          type: "button",
-          text: "toggle mode",
+          text: props.mode === "dark" ? "Light mode" : "Dark mode",
           onClick: () => {
             if (props.mode === "dark") {
               props.setMode("light");
@@ -62,8 +55,6 @@ export default function Header(props) {
             ]),
       ]}
       i18nStrings={{
-        searchIconAriaLabel: "Search",
-        searchDismissIconAriaLabel: "Close search",
         overflowMenuTriggerText: "More",
         overflowMenuTitleText: "All",
         overflowMenuBackIconAriaLabel: "Back",
