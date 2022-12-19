@@ -6,6 +6,7 @@ import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { Storage } from "aws-amplify";
+import { useCollection } from "@cloudscape-design/collection-hooks";
 
 import AuthGuard from "./authenticator";
 import Preview from "./preview";
@@ -24,6 +25,10 @@ export default function Submissions({ colorMode }) {
       })
       .catch((err) => console.log(err));
   }, []);
+
+  const { items, collectionProps } = useCollection(files, {
+    sorting: {},
+  });
 
   const downloadFile = (key) => {
     Storage.vault
@@ -49,7 +54,8 @@ export default function Submissions({ colorMode }) {
           colorMode={colorMode}
         />
         <Table
-          items={files}
+          items={items}
+          {...collectionProps}
           columnDefinitions={[
             {
               id: "key",
@@ -96,9 +102,7 @@ export default function Submissions({ colorMode }) {
           ]}
           loading={loading}
           loadingText="Loading"
-          stripedRows={false}
           variant="container"
-          totalItemsCount={4}
           trackBy="key"
           empty={
             <Box textAlign="center" color="inherit">

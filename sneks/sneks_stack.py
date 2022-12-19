@@ -22,6 +22,7 @@ class SneksStack(Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
             removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
             cors=[
                 s3.CorsRule(
                     allowed_headers=["*"],
@@ -36,8 +37,8 @@ class SneksStack(Stack):
             "ResultsBucket",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
-            versioned=True,
             removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
         )
 
         processor = lambda_python.PythonFunction(
