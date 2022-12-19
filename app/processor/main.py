@@ -1,2 +1,6 @@
-def main():
-    print("Hello, world!")
+import json
+
+
+def main(event, context):
+    print(json.dumps(event))
+    print(json.dumps(context))

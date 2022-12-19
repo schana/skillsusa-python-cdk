@@ -6,6 +6,8 @@ from aws_cdk import (
     aws_lambda as lambda_,
     aws_lambda_event_sources as lambda_event_sources,
     aws_lambda_python_alpha as lambda_python,
+    aws_events as events,
+    aws_events_targets as targets,
 )
 from constructs import Construct
 
@@ -30,6 +32,7 @@ class SneksStack(Stack):
                     allowed_origins=["*"],
                 )
             ],
+            event_bridge_enabled=True,
         )
 
         results_bucket = s3.Bucket(
@@ -52,6 +55,19 @@ class SneksStack(Stack):
 
         submission_bucket.grant_read(processor)
         results_bucket.grant_read_write(processor)
+
+        rule = events.Rule(
+            self,
+            "SubmissionRule",
+            enabled=True,
+            event_pattern=events.EventPattern(
+                source=["aws.s3"],
+                detail_type=["Object Created"],
+                resources=[submission_bucket.bucket_arn],
+            ),
+        )
+
+        rule.add_target(target=targets.LambdaFunction(processor))
 
         submission_event = lambda_event_sources.S3EventSource(
             bucket=submission_bucket,

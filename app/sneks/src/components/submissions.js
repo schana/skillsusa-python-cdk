@@ -20,7 +20,7 @@ export default function Submissions({ colorMode }) {
     Storage.vault
       .list("", { pageSize: "ALL" })
       .then((result) => {
-        setFiles(result.results);
+        setFiles(result.results.filter((file) => file.size > 0));
         setLoading(false);
       })
       .catch((err) => console.log(err));
