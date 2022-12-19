@@ -25,7 +25,7 @@ class SneksStack(Stack):
             cors=[
                 s3.CorsRule(
                     allowed_headers=["*"],
-                    allowed_methods=[s3.HttpMethods.PUT],
+                    allowed_methods=[s3.HttpMethods.PUT, s3.HttpMethods.GET],
                     allowed_origins=["*"],
                 )
             ],

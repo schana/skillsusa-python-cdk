@@ -5,8 +5,9 @@ import AuthGuard from "./authenticator";
 import Home from "./home";
 import Scores from "./scores";
 import Submit from "./submit";
+import Submissions from "./submissions";
 
-export default function Content() {
+export default function Content({ colorMode }) {
   const element = useRoutes([
     {
       path: "/",
@@ -27,6 +28,10 @@ export default function Content() {
     {
       path: "submit",
       element: <Submit />,
+    },
+    {
+      path: "submissions",
+      element: <Submissions colorMode={colorMode} />,
     },
   ]);
 

@@ -25,6 +25,7 @@ export default function Navigation() {
         { type: "link", text: "Home", href: "/" },
         { type: "link", text: "Scores", href: "/scores" },
         { type: "link", text: "Submit", href: "/submit" },
+        { type: "link", text: "Submissions", href: "/submissions" },
         { type: "divider" },
         {
           type: "link",

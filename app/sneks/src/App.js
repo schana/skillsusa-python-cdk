@@ -18,8 +18,6 @@ import Tools from "./components/tools";
 
 import SneksHeader from "./components/header";
 
-import "./App.css";
-
 export default function App() {
   const theme = {
     name: "my-theme",
@@ -61,7 +59,7 @@ export default function App() {
         navigation={<Navigation />}
         notifications={<Notifications />}
         tools={<Tools />}
-        content={<Content />}
+        content={<Content colorMode={amplifyColorMode} />}
       />
     </ThemeProvider>
   );

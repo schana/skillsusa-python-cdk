@@ -23,7 +23,7 @@ export default function Submit() {
           variation="drop"
           acceptedFileTypes={[".py"]}
           maxFiles={20}
-          maxSize={100000}
+          maxSize={10000}
         />
       </ContentLayout>
     </AuthGuard>
