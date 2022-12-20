@@ -50,12 +50,13 @@ class SneksStack(Stack):
 
         start_processor = self.build_python_lambda("StartProcessor", "start_processing")
         pre_processor = self.build_python_lambda(
-            name="PreProcessor", handler="pre_process"
+            name="PreProcessor", handler="pre_process", timeout=Duration.minutes(5)
         )
         validator = self.build_python_lambda(name="Validator", handler="validate")
         processor = self.build_python_lambda(name="Processor", handler="process")
 
         submission_bucket.grant_read_write(pre_processor)
+        submission_bucket.grant_delete(pre_processor)
         submission_bucket.grant_read(validator)
         submission_bucket.grant_read(processor)
         results_bucket.grant_read_write(processor)
@@ -140,7 +141,9 @@ class SneksStack(Stack):
             export_name="SneksSubmissionBucket",
         )
 
-    def build_python_lambda(self, name: str, handler: str):
+    def build_python_lambda(
+        self, name: str, handler: str, timeout: Duration = Duration.seconds(3)
+    ):
         return lambda_python.PythonFunction(
             self,
             name,
@@ -148,4 +151,5 @@ class SneksStack(Stack):
             entry="./app/processor",
             index="main.py",
             handler=handler,
+            timeout=timeout,
         )

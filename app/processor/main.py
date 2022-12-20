@@ -4,6 +4,7 @@ import boto3
 import os
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.data_classes import event_source, SQSEvent
+from pathlib import PurePosixPath
 
 if typing.TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket, BucketObjectsCollection
@@ -32,7 +33,15 @@ def pre_process(event: dict, context: LambdaContext):
     bucket: Bucket = s3.Bucket(event.get("bucket"))
     objects: BucketObjectsCollection = bucket.objects.filter(Prefix="private/")
     for s3_object in objects:
-        print(s3_object.key)
+        key = s3_object.key
+        path = PurePosixPath(key)
+        if len(path.parts) == 3:  #  private/<user>/<filename>
+            # Move the new files to a staging area
+            print(f"staging {path}")
+            bucket.Object(str(path.parent / "staging" / path.name)).copy(
+                CopySource=dict(Bucket=bucket.name, Key=key)
+            )
+            s3_object.delete()
 
 
 def validate(event, context):
