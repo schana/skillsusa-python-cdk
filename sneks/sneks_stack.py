@@ -53,11 +53,14 @@ class SneksStack(Stack):
             name="PreProcessor", handler="pre_process", timeout=Duration.minutes(5)
         )
         validator = self.build_python_lambda(name="Validator", handler="validate")
+        post_validator = self.build_python_lambda(
+            name="PostValidator", handler="post_validate"
+        )
         processor = self.build_python_lambda(name="Processor", handler="process")
 
         submission_bucket.grant_read_write(pre_processor)
-        submission_bucket.grant_delete(pre_processor)
         submission_bucket.grant_read(validator)
+        submission_bucket.grant_read_write(post_validator)
         submission_bucket.grant_read(processor)
         results_bucket.grant_read_write(processor)
 
@@ -98,6 +101,7 @@ class SneksStack(Stack):
             )
         )
 
+        # Wait for the SQS dedupe time to get uploaded items in a "batch"
         task_wait = step_functions.Wait(
             self,
             "WaitForUploadComplete",
@@ -106,6 +110,7 @@ class SneksStack(Stack):
             ),
         )
 
+        # Move new files into "staging" folder before validation
         task_pre_process = tasks.LambdaInvoke(
             self,
             "PreProcessTask",
@@ -115,7 +120,54 @@ class SneksStack(Stack):
             ),
         )
 
-        definition = task_wait.next(task_pre_process)
+        post_pre_process_choice = (
+            step_functions.Choice(self, "PostPreProcessChoice")
+            .when(
+                step_functions.Condition.is_present("$.staged[0]"),
+                step_functions.Succeed(self, "No new submissions"),
+            )
+            .afterwards(include_otherwise=True)
+        )
+
+        # Validate each staged submission using a map
+        task_validate_map = step_functions.Map(
+            self, "ValidateMap", items_path="$.staged"
+        )
+        task_validate = tasks.LambdaInvoke(
+            self, "ValidateTask", lambda_function=validator
+        )
+        # After validation, move submission to "submitted <timestamp>"
+        task_post_validation_success = tasks.LambdaInvoke(
+            self,
+            "PostValidateSuccess",
+            lambda_function=post_validator,
+            payload=step_functions.TaskInput.from_object(dict(success=True)),
+        )
+        # On failure, move submission to "invalid <timestamp>"
+        task_post_validation_failure = tasks.LambdaInvoke(
+            self,
+            "PostValidateFailure",
+            lambda_function=post_validator,
+            payload=step_functions.TaskInput.from_object(dict(success=False)),
+        )
+        task_validate_map.iterator(
+            task_validate.add_catch(task_post_validation_failure).next(
+                task_post_validation_success
+            )
+        )
+
+        task_process = tasks.LambdaInvoke(
+            self,
+            "ProcessTask",
+            lambda_function=processor,
+        )
+
+        definition = (
+            task_wait.next(task_pre_process)
+            .next(post_pre_process_choice)
+            .next(task_validate_map)
+            .next(task_process)
+        )
 
         workflow = step_functions.StateMachine(
             self, "Workflow", definition=definition, timeout=Duration.minutes(5)

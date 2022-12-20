@@ -32,6 +32,7 @@ def pre_process(event: dict, context: LambdaContext):
     s3: S3ServiceResource = boto3.resource("s3")
     bucket: Bucket = s3.Bucket(event.get("bucket"))
     objects: BucketObjectsCollection = bucket.objects.filter(Prefix="private/")
+    staged = set()
     for s3_object in objects:
         key = s3_object.key
         path = PurePosixPath(key)
@@ -42,7 +43,13 @@ def pre_process(event: dict, context: LambdaContext):
                 CopySource=dict(Bucket=bucket.name, Key=key)
             )
             s3_object.delete()
+            staged.add(str(path.parent / "staging"))
+    return dict(staged=list(staged))
 
 
 def validate(event, context):
     pass
+
+
+def post_validate(event: dict, context: LambdaContext):
+    success: bool = event.get("success")
