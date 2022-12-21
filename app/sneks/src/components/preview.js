@@ -14,7 +14,12 @@ import {
 
 SyntaxHighlighter.registerLanguage("python", python);
 
-export default function Preview({ objectKey, setObjectKey, colorMode }) {
+export default function Preview({
+  objectKey,
+  setObjectKey,
+  colorMode,
+  spliceName,
+}) {
   const [visible, setVisible] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
   const [previewText, setPreviewText] = React.useState("");
@@ -56,7 +61,7 @@ export default function Preview({ objectKey, setObjectKey, colorMode }) {
           </SpaceBetween>
         </Box>
       }
-      header={objectKey}
+      header={spliceName ? objectKey.split("/").splice(1) : objectKey}
     >
       <Box display={progress < 100 ? "" : "none"}>
         <ProgressBar value={progress} label="Preparing" />

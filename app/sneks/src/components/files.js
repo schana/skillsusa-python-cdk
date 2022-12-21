@@ -39,12 +39,15 @@ export default function Files({ colorMode, prefix }) {
     });
     Storage.list("", { pageSize: "ALL", level: "protected" })
       .then((result) => {
-        const groups = Array.from(
-          new Set(result.results.map((e) => e.key.split("/")[0])).values()
-        ).sort();
-        result.results.forEach(
-          (e) => (e["group"] = groups.indexOf(e.key.split("/")[0]))
-        );
+        result.results.sort((a, b) => b.key.localeCompare(a.key));
+        if (prefix !== "private/") {
+          const groups = Array.from(
+            new Set(result.results.map((e) => e.key.split("/")[0])).values()
+          ).sort();
+          result.results.forEach(
+            (e) => (e["group"] = groups.indexOf(e.key.split("/")[0]))
+          );
+        }
         setFiles(result.results);
         setLoading(false);
       })
@@ -63,66 +66,73 @@ export default function Files({ colorMode, prefix }) {
       .catch((err) => console.log(err));
   };
 
+  const definitions = [];
+  if (prefix !== "private/") {
+    definitions.push({
+      id: "group",
+      header: "Group",
+      cell: (e) => e.group,
+      sortingField: "group",
+    });
+  }
+  definitions.push(
+    {
+      id: "key",
+      header: "Name",
+      cell: (e) =>
+        prefix === "private/" ? e.key : e.key.split("/").splice(1).join("/"),
+      sortingField: "key",
+    },
+    {
+      id: "lastModified",
+      header: "Last Modified",
+      cell: (e) => e.lastModified.toLocaleString(),
+      sortingField: "lastModified",
+    },
+    {
+      id: "size",
+      header: "Size",
+      cell: (e) => formatBytes(e.size),
+      sortingField: "size",
+    },
+    {
+      id: "download",
+      header: (
+        <Box float="right" variant="awsui-key-label">
+          Access
+        </Box>
+      ),
+      cell: (item) => (
+        <Box float="right">
+          <SpaceBetween direction="horizontal" size="xs">
+            <Button
+              variant="normal"
+              iconName="script"
+              onClick={() => setPreviewKey(item.key)}
+            />
+            <Button
+              variant="primary"
+              iconName="download"
+              onClick={() => downloadFile(item.key)}
+            />
+          </SpaceBetween>
+        </Box>
+      ),
+    }
+  );
+
   return (
     <>
       <Preview
         objectKey={previewKey}
         setObjectKey={setPreviewKey}
         colorMode={colorMode}
+        spliceName={prefix !== "private/"}
       />
       <Table
         items={items}
         {...collectionProps}
-        columnDefinitions={[
-          {
-            id: "group",
-            header: "Group",
-            cell: (e) => e.group,
-            sortingField: "group",
-          },
-          {
-            id: "key",
-            header: "Name",
-            cell: (e) => e.key.split("/").splice(1).join("/"),
-            sortingField: "key",
-          },
-          {
-            id: "lastModified",
-            header: "Last Modified",
-            cell: (e) => e.lastModified.toLocaleString(),
-            sortingField: "lastModified",
-          },
-          {
-            id: "size",
-            header: "Size",
-            cell: (e) => formatBytes(e.size),
-            sortingField: "size",
-          },
-          {
-            id: "download",
-            header: (
-              <Box float="right" variant="awsui-key-label">
-                Access
-              </Box>
-            ),
-            cell: (item) => (
-              <Box float="right">
-                <SpaceBetween direction="horizontal" size="xs">
-                  <Button
-                    variant="normal"
-                    iconName="script"
-                    onClick={() => setPreviewKey(item.key)}
-                  />
-                  <Button
-                    variant="primary"
-                    iconName="download"
-                    onClick={() => downloadFile(item.key)}
-                  />
-                </SpaceBetween>
-              </Box>
-            ),
-          },
-        ]}
+        columnDefinitions={definitions}
         loading={loading}
         loadingText="Loading"
         variant="embedded"
