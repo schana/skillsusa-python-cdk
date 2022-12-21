@@ -94,6 +94,8 @@ class SneksStack(Stack):
                 source=["aws.s3"],
                 detail_type=["Object Created"],
                 resources=[submission_bucket.bucket_arn],
+                # Enough to distinguish for now, may have to add prefix later if we start putting files
+                detail=dict(reason=["PutObject"]),
             ),
         )
 
@@ -111,7 +113,7 @@ class SneksStack(Stack):
             self,
             "WaitForUploadComplete",
             time=step_functions.WaitTime.duration(
-                Duration.minutes(1)  # TODO: replace minutes with 5
+                Duration.seconds(10)  # TODO: replace with Duration.minutes(5)
             ),
         )
 
@@ -197,6 +199,14 @@ class SneksStack(Stack):
             self,
             name,
             runtime=lambda_.Runtime.PYTHON_3_9,
+            layers=[
+                lambda_python.PythonLayerVersion(
+                    self,
+                    f"{name}Layer",
+                    entry="./app/processor",
+                    compatible_runtimes=[lambda_.Runtime.PYTHON_3_9],
+                )
+            ],
             entry="./app/processor",
             index="main.py",
             handler=handler,
