@@ -58,12 +58,18 @@ def validate(event, context):
     bucket: Bucket = s3.Bucket(event.get("bucket"))
     objects: BucketObjectsCollection = bucket.objects.filter(Prefix=event.get("prefix"))
     for obj in objects:
-        if not os.path.exists(os.path.dirname(obj.key)):
-            os.makedirs(os.path.dirname(obj.key))
-        bucket.download_file(obj.key, obj.key)
+        filename = f"/tmp/{obj.key}"
+        if not os.path.exists(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
+        bucket.download_file(obj.key, filename)
     timeout_seconds = 30
+    filtered_env = {key: os.environ[key] for key in ("PYTHONPATH", "PATH")}
     subprocess.run(
-        ["pytest"], cwd=event.get("prefix"), timeout=timeout_seconds, env={}, check=True
+        ["pytest"],
+        cwd=f"/tmp/{event.get('prefix')}",
+        timeout=timeout_seconds,
+        env=filtered_env,
+        check=True,
     )
     return event
 

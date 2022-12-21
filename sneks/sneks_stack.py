@@ -52,11 +52,15 @@ class SneksStack(Stack):
         pre_processor = self.build_python_lambda(
             name="PreProcessor", handler="pre_process", timeout=Duration.minutes(5)
         )
-        validator = self.build_python_lambda(name="Validator", handler="validate")
-        post_validator = self.build_python_lambda(
-            name="PostValidator", handler="post_validate"
+        validator = self.build_python_lambda(
+            name="Validator", handler="validate", timeout=Duration.minutes(1)
         )
-        processor = self.build_python_lambda(name="Processor", handler="process")
+        post_validator = self.build_python_lambda(
+            name="PostValidator", handler="post_validate", timeout=Duration.minutes(1)
+        )
+        processor = self.build_python_lambda(
+            name="Processor", handler="process", timeout=Duration.minutes(10)
+        )
 
         submission_bucket.grant_read_write(pre_processor)
         submission_bucket.grant_read(validator)
@@ -182,7 +186,7 @@ class SneksStack(Stack):
         )
 
         workflow = step_functions.StateMachine(
-            self, "Workflow", definition=definition, timeout=Duration.minutes(5)
+            self, "Workflow", definition=definition, timeout=Duration.minutes(10)
         )
         start_processor.add_environment("STATE_MACHINE_ARN", workflow.state_machine_arn)
         workflow.grant_start_execution(start_processor)
