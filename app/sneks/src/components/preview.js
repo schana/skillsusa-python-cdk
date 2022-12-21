@@ -22,13 +22,13 @@ export default function Preview({ objectKey, setObjectKey, colorMode }) {
   React.useEffect(() => {
     if (objectKey) {
       setVisible(true);
-      Storage.vault
-        .get(objectKey, {
-          download: true,
-          progressCallback: (p) => {
-            setProgress((100 * p.loaded) / p.total);
-          },
-        })
+      Storage.get(objectKey, {
+        download: true,
+        progressCallback: (p) => {
+          setProgress((100 * p.loaded) / p.total);
+        },
+        level: "protected",
+      })
         .then((result) => {
           result.Body.text().then((data) => setPreviewText(data));
         })

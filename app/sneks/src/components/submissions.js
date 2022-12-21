@@ -1,45 +1,14 @@
 import * as React from "react";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
-import Table from "@cloudscape-design/components/table";
-import Box from "@cloudscape-design/components/box";
-import Button from "@cloudscape-design/components/button";
-import SpaceBetween from "@cloudscape-design/components/space-between";
-import { Storage } from "aws-amplify";
-import { useCollection } from "@cloudscape-design/collection-hooks";
-import { useNavigate } from "react-router-dom";
+import Tabs from "@cloudscape-design/components/tabs";
 
 import AuthGuard from "./authenticator";
-import Preview from "./preview";
+import Files from "./files";
+import { useLocalStorage } from "../hooks";
 
 export default function Submissions({ colorMode }) {
-  const [loading, setLoading] = React.useState(true);
-  const [files, setFiles] = React.useState([]);
-  const [previewKey, setPreviewKey] = React.useState("");
-  const navigate = useNavigate();
-
-  React.useEffect(() => {
-    Storage.vault
-      .list("", { pageSize: "ALL" })
-      .then((result) => {
-        setFiles(result.results.filter((file) => file.size > 0));
-        setLoading(false);
-      })
-      .catch((err) => console.log(err));
-  }, []);
-
-  const { items, collectionProps } = useCollection(files, {
-    sorting: {},
-  });
-
-  const downloadFile = (key) => {
-    Storage.vault
-      .get(key)
-      .then((result) => {
-        window.open(result, "_blank");
-      })
-      .catch((err) => console.log(err));
-  };
+  const [activeTabId, setActiveTabId] = useLocalStorage("submitted");
 
   return (
     <AuthGuard>
@@ -50,73 +19,32 @@ export default function Submissions({ colorMode }) {
           </Header>
         }
       >
-        <Preview
-          objectKey={previewKey}
-          setObjectKey={setPreviewKey}
-          colorMode={colorMode}
-        />
-        <Table
-          items={items}
-          {...collectionProps}
-          columnDefinitions={[
+        <Tabs
+          onChange={({ detail }) => setActiveTabId(detail.activeTabId)}
+          activeTabId={activeTabId}
+          tabs={[
             {
-              id: "key",
-              header: "Name",
-              cell: (e) => e.key,
-              sortingField: "key",
+              label: "Uploaded",
+              id: "uploaded",
+              content: <Files colorMode={colorMode} prefix={"private/"} />,
             },
             {
-              id: "lastModified",
-              header: "Last Modified",
-              cell: (e) => e.lastModified.toLocaleString(),
-              sortingField: "lastModified",
+              label: "Processing",
+              id: "processing",
+              content: <Files colorMode={colorMode} prefix={"processing/"} />,
             },
             {
-              id: "size",
-              header: "Size",
-              cell: (e) => e.size,
-              sortingField: "size",
+              label: "Submitted",
+              id: "submitted",
+              content: <Files colorMode={colorMode} prefix={"submitted/"} />,
             },
             {
-              id: "download",
-              header: (
-                <Box float="right" variant="awsui-key-label">
-                  Access
-                </Box>
-              ),
-              cell: (item) => (
-                <Box float="right">
-                  <SpaceBetween direction="horizontal" size="xs">
-                    <Button
-                      variant="normal"
-                      iconName="script"
-                      onClick={() => setPreviewKey(item.key)}
-                    />
-                    <Button
-                      variant="primary"
-                      iconName="download"
-                      onClick={() => downloadFile(item.key)}
-                    />
-                  </SpaceBetween>
-                </Box>
-              ),
+              label: "Invalid",
+              id: "invalid",
+              content: <Files colorMode={colorMode} prefix={"invalid/"} />,
             },
           ]}
-          loading={loading}
-          loadingText="Loading"
           variant="container"
-          trackBy="key"
-          empty={
-            <Box textAlign="center" color="inherit">
-              <b>No submissions</b>
-              <Box padding={{ bottom: "s" }} variant="p" color="inherit">
-                Nothing has been uploaded yet
-              </Box>
-              <Button onClick={() => navigate("/submit")}>
-                Upload submission
-              </Button>
-            </Box>
-          }
         />
       </ContentLayout>
     </AuthGuard>

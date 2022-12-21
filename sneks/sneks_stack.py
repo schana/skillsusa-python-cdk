@@ -37,6 +37,7 @@ class SneksStack(Stack):
                 )
             ],
             event_bridge_enabled=True,
+            transfer_acceleration=True,
         )
 
         results_bucket = s3.Bucket(
