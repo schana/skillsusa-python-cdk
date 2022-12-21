@@ -95,8 +95,7 @@ class StaticSite(Construct):
 
         user_pool_client = user_pool.add_client(
             "Amplify",
-            # TODO: change this before launch
-            prevent_user_existence_errors=False,
+            prevent_user_existence_errors=True,
         )
 
         identity_pool = cognito_identity.IdentityPool(
