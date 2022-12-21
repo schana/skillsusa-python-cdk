@@ -141,14 +141,26 @@ class SneksStack(Stack):
             self,
             "PostValidateSuccess",
             lambda_function=post_validator,
-            payload=step_functions.TaskInput.from_object(dict(success=True)),
+            payload=step_functions.TaskInput.from_object(
+                dict(
+                    success=True,
+                    prefix="$.Payload.prefix",
+                    bucket="$.Payload.bucket",
+                )
+            ),
         )
         # On failure, move submission to "invalid <timestamp>"
         task_post_validation_failure = tasks.LambdaInvoke(
             self,
             "PostValidateFailure",
             lambda_function=post_validator,
-            payload=step_functions.TaskInput.from_object(dict(success=False)),
+            payload=step_functions.TaskInput.from_object(
+                dict(
+                    success=False,
+                    prefix="$.Payload.prefix",
+                    bucket="$.Payload.bucket",
+                )
+            ),
         )
         task_validate_map.iterator(
             task_validate.add_catch(task_post_validation_failure).next(
