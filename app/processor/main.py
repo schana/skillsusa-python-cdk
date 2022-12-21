@@ -83,7 +83,7 @@ def post_validate(event: dict, context: LambdaContext):
     prefix: str = event.get("prefix")
     new_prefix = (
         f"{prefix.replace('processing', 'invalid', 1)}"
-        f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}"
+        f"{datetime.utcnow().isoformat(timespec='seconds')}/"
     )
     if success:
         new_prefix = new_prefix.replace("processing", "submitted", 1)
