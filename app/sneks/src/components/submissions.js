@@ -7,6 +7,7 @@ import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { Storage } from "aws-amplify";
 import { useCollection } from "@cloudscape-design/collection-hooks";
+import { useNavigate } from "react-router-dom";
 
 import AuthGuard from "./authenticator";
 import Preview from "./preview";
@@ -15,6 +16,7 @@ export default function Submissions({ colorMode }) {
   const [loading, setLoading] = React.useState(true);
   const [files, setFiles] = React.useState([]);
   const [previewKey, setPreviewKey] = React.useState("");
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     Storage.vault
@@ -110,7 +112,9 @@ export default function Submissions({ colorMode }) {
               <Box padding={{ bottom: "s" }} variant="p" color="inherit">
                 Nothing has been uploaded yet
               </Box>
-              <Button>Upload submission</Button>
+              <Button onClick={() => navigate("/submit")}>
+                Upload submission
+              </Button>
             </Box>
           }
         />

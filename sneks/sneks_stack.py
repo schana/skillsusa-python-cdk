@@ -123,7 +123,7 @@ class SneksStack(Stack):
         post_pre_process_choice = (
             step_functions.Choice(self, "PostPreProcessChoice")
             .when(
-                step_functions.Condition.is_present("$.staged[0]"),
+                step_functions.Condition.is_not_present("$.Payload.staged[0]"),
                 step_functions.Succeed(self, "No new submissions"),
             )
             .afterwards(include_otherwise=True)
@@ -131,7 +131,7 @@ class SneksStack(Stack):
 
         # Validate each staged submission using a map
         task_validate_map = step_functions.Map(
-            self, "ValidateMap", items_path="$.staged"
+            self, "ValidateMap", items_path="$.Payload.staged"
         )
         task_validate = tasks.LambdaInvoke(
             self, "ValidateTask", lambda_function=validator

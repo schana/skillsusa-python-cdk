@@ -47,8 +47,12 @@ export default function Preview({ objectKey, setObjectKey, colorMode }) {
       footer={
         <Box float="right">
           <SpaceBetween direction="horizontal" size="xs">
-            <Button variant="link">Cancel</Button>
-            <Button variant="primary">Done</Button>
+            <Button variant="link" onClick={() => setObjectKey("")}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={() => setObjectKey("")}>
+              Done
+            </Button>
           </SpaceBetween>
         </Box>
       }
