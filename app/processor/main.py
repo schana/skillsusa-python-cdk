@@ -64,19 +64,22 @@ def validate(event, context):
         bucket.download_file(obj.key, filename)
     timeout_seconds = 30
     filtered_env = {key: os.environ[key] for key in ("PYTHONPATH", "PATH")}
-    subprocess.run(
-        ["pytest"],
+    result = subprocess.run(
+        ["python", "-m", "pytest"],
         cwd=f"/tmp/{event.get('prefix')}",
         timeout=timeout_seconds,
         env=filtered_env,
-        check=True,
+        text=True,
     )
+    print("stdout:", result.stdout)
+    print("stderr:", result.stderr)
+    result.check_returncode()
     return event
 
 
 def post_validate(event: dict, context: LambdaContext):
     print(event)
-    success: bool = event.get("success")
+    success: bool = "error" in event
     prefix: str = event.get("prefix")
     new_prefix = (
         f"{prefix.replace('processing', 'invalid', 1)}"
