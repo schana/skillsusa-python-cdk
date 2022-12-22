@@ -1,10 +1,10 @@
 import os
-import subprocess
-import typing
 import pathlib
-from datetime import datetime, timezone
+import typing
+from datetime import datetime
 
 import boto3
+import pytest
 from aws_lambda_powertools.utilities.data_classes import event_source, SQSEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
@@ -26,8 +26,10 @@ def start_processing(event: SQSEvent, context: LambdaContext):
 
 
 def process(event, context):
+    if not any(event):
+        print("no new submissions")
+        return
     print(event)
-    print(context)
 
 
 def pre_process(event: dict, context: LambdaContext):
@@ -53,7 +55,6 @@ def pre_process(event: dict, context: LambdaContext):
 
 def validate(event, context):
     print(event)
-    print(os.environ)
     s3: S3ServiceResource = boto3.resource("s3")
     bucket: Bucket = s3.Bucket(event.get("bucket"))
     objects: BucketObjectsCollection = bucket.objects.filter(Prefix=event.get("prefix"))
@@ -62,31 +63,23 @@ def validate(event, context):
         if not os.path.exists(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
         bucket.download_file(obj.key, filename)
-    timeout_seconds = 30
-    filtered_env = {key: os.environ[key] for key in ("PYTHONPATH", "PATH")}
-    result = subprocess.run(
-        ["python", "-m", "pytest"],
-        cwd=f"/tmp/{event.get('prefix')}",
-        timeout=timeout_seconds,
-        env=filtered_env,
-        text=True,
-    )
-    print("stdout:", result.stdout)
-    print("stderr:", result.stderr)
-    result.check_returncode()
+
+    if pytest.main([f"/tmp/{event.get('prefix')}"]) != pytest.ExitCode.OK:
+        raise ValueError("validation failed")
+
     return event
 
 
 def post_validate(event: dict, context: LambdaContext):
     print(event)
-    success: bool = "error" in event
+    success: bool = "error" not in event
     prefix: str = event.get("prefix")
     new_prefix = (
         f"{prefix.replace('processing', 'invalid', 1)}"
         f"{datetime.utcnow().isoformat(timespec='seconds')}/"
     )
     if success:
-        new_prefix = new_prefix.replace("processing", "submitted", 1)
+        new_prefix = new_prefix.replace("invalid", "submitted", 1)
     s3: S3ServiceResource = boto3.resource("s3")
     bucket: Bucket = s3.Bucket(event.get("bucket"))
     objects: BucketObjectsCollection = bucket.objects.filter(Prefix=prefix)
@@ -96,3 +89,5 @@ def post_validate(event: dict, context: LambdaContext):
         print(f"moving {key} to {new_key}")
         bucket.Object(new_key).copy(CopySource=dict(Bucket=bucket.name, Key=key))
         obj.delete()
+
+    return success

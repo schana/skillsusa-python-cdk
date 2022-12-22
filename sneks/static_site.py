@@ -20,18 +20,10 @@ class StaticSite(Construct):
         scope: Construct,
         construct_id: str,
         submission_bucket: s3.Bucket,
+        static_site_bucket: s3.Bucket,
         **kwargs
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
-
-        static_site_bucket = s3.Bucket(
-            self,
-            "StaticSiteBucket",
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            enforce_ssl=True,
-            removal_policy=RemovalPolicy.DESTROY,
-            auto_delete_objects=True,
-        )
 
         distribution = cloudfront.Distribution(
             self,
