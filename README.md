@@ -3,9 +3,10 @@
 ### Prerequisites
 
 1. (GD) Buy domain from Google domains
-2. (GD) Set domain forward from `<domain>` to `www.<domain>`
+2. (GD) Set website forward from `<domain>` to `www.<domain>`
 3. (AWS) Create certificate in Certificate Manager
-4. (AWS) Set SSM parameter `certificate-arn` with the certificate arn
+4. (GD) Add CNAME records from Certificate Manager
+5. (AWS) Set SSM parameter `certificate-arn` with the certificate arn
 
 ### Deploy steps
 
