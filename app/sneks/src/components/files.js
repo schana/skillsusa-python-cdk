@@ -80,7 +80,9 @@ export default function Files({ colorMode, prefix }) {
       id: "key",
       header: "Name",
       cell: (e) =>
-        prefix === "private/" || prefix === "processing/" ? e.key : e.key.split("/").splice(1).join("/"),
+        prefix === "private/" || prefix === "processing/"
+          ? e.key
+          : e.key.split("/").splice(1).join("/"),
       sortingField: "key",
     },
     {
