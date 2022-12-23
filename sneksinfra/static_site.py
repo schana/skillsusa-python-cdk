@@ -59,6 +59,7 @@ class StaticSite(Construct):
             sources=[s3_deployment.Source.asset("app/sneks/build")],
             retain_on_delete=False,
             distribution=distribution,
+            exclude=["games/*"],
         )
 
         user_pool = cognito.UserPool(
