@@ -3,3 +3,4 @@ black==22.12.0
 aws-lambda-powertools[aws-sdk]
 boto3-stubs-lite[essential]
 boto3-stubs-lite[stepfunctions]
+sneks-dev==1.0.0a1

@@ -17,7 +17,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from sneks.static_site import StaticSite
+from sneksinfra.static_site import StaticSite
 
 
 class SneksStack(Stack):

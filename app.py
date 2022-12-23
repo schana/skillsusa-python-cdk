@@ -2,7 +2,7 @@
 
 import aws_cdk as cdk
 
-from sneks.sneks_stack import SneksStack
+from sneksinfra.sneks_stack import SneksStack
 
 app = cdk.App()
 SneksStack(

@@ -8,6 +8,8 @@ import pytest
 from aws_lambda_powertools.utilities.data_classes import event_source, SQSEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
+from sneks.validator import main as sneks_validator
+
 if typing.TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket, BucketObjectsCollection
     from mypy_boto3_s3 import S3ServiceResource
@@ -64,8 +66,7 @@ def validate(event, context):
             os.makedirs(os.path.dirname(filename))
         bucket.download_file(obj.key, filename)
 
-    if pytest.main([f"/tmp/{event.get('prefix')}"]) != pytest.ExitCode.OK:
-        raise ValueError("validation failed")
+    sneks_validator.main(test_path=f"/tmp/{event.get('prefix')}")
 
     return event
 
