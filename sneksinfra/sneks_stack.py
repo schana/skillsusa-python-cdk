@@ -39,7 +39,8 @@ class SneksStack(Stack):
             validator,
             post_validator,
             processor,
-        ) = self.get_lambdas(submission_bucket)
+            post_processor,
+        ) = self.get_lambdas(submission_bucket, static_site_bucket)
 
         self.build_submission_queue(submission_bucket, start_processor)
 
@@ -49,12 +50,19 @@ class SneksStack(Stack):
             validator=validator,
             post_validator=post_validator,
             processor=processor,
+            post_processor=post_processor,
         )
         start_processor.add_environment("STATE_MACHINE_ARN", workflow.state_machine_arn)
         workflow.grant_start_execution(start_processor)
 
     def build_state_machine(
-        self, submission_bucket, pre_processor, validator, post_validator, processor
+        self,
+        submission_bucket,
+        pre_processor,
+        validator,
+        post_validator,
+        processor,
+        post_processor,
     ) -> step_functions.StateMachine:
         # Wait for the SQS dedupe time to get uploaded items in a "batch"
         task_wait = step_functions.Wait(
@@ -108,10 +116,18 @@ class SneksStack(Stack):
             )
         )
 
-        task_process = tasks.LambdaInvoke(
+        parallel_process = step_functions.Parallel(
             self,
-            "ProcessTask",
-            lambda_function=processor,
+            "ParallelProcess",
+        )
+
+        for i in range(10):
+            parallel_process.branch(self.get_process_task(f"ProcessTask{i}", processor))
+
+        task_post_process = tasks.LambdaInvoke(
+            self,
+            "PostProcess",
+            lambda_function=post_processor,
             payload_response_only=True,
         )
 
@@ -119,11 +135,17 @@ class SneksStack(Stack):
             task_wait.next(task_pre_process)
             .next(choice_post_pre_process)
             .next(task_validate_map)
-            .next(task_process)
+            .next(parallel_process)
+            .next(task_post_process)
         )
 
         return step_functions.StateMachine(
-            self, "Workflow", definition=definition, timeout=Duration.minutes(10)
+            self, "Workflow", definition=definition, timeout=Duration.minutes(5)
+        )
+
+    def get_process_task(self, identifier, processor) -> tasks.LambdaInvoke:
+        return tasks.LambdaInvoke(
+            self, identifier, lambda_function=processor, payload_response_only=True
         )
 
     def get_buckets(self) -> (s3.Bucket, s3.Bucket):
@@ -164,30 +186,43 @@ class SneksStack(Stack):
         return submission_bucket, static_site_bucket
 
     def get_lambdas(
-        self, submission_bucket: s3.Bucket
+        self, submission_bucket: s3.Bucket, static_site_bucket: s3.Bucket
     ) -> typing.Iterable[lambda_.Function]:
         start_processor = self.build_python_lambda("StartProcessor", "start_processing")
         pre_processor = self.build_python_lambda(
-            name="PreProcessor", handler="pre_process", timeout=Duration.minutes(5)
+            name="PreProcessor", handler="pre_process", timeout=Duration.seconds(30)
         )
         validator = self.build_python_lambda(
             name="Validator",
             handler="validate",
-            timeout=Duration.minutes(1),
+            timeout=Duration.seconds(30),
         )
         post_validator = self.build_python_lambda(
-            name="PostValidator", handler="post_validate", timeout=Duration.minutes(1)
+            name="PostValidator", handler="post_validate", timeout=Duration.seconds(30)
         )
         processor = self.build_python_lambda(
-            name="Processor", handler="process", timeout=Duration.minutes(10)
+            name="Processor", handler="process", timeout=Duration.minutes(3)
+        )
+        post_processor = self.build_python_lambda(
+            name="PostProcessor", handler="post_process", timeout=Duration.seconds(30)
         )
 
         submission_bucket.grant_read_write(pre_processor)
-        submission_bucket.grant_read(validator)
+        submission_bucket.grant_read(validator, objects_key_pattern="processing/*")
         submission_bucket.grant_read_write(post_validator)
-        submission_bucket.grant_read(processor)
+        submission_bucket.grant_read(processor, objects_key_pattern="submitted/*")
+        submission_bucket.grant_put(processor, objects_key_pattern="")
+        static_site_bucket.grant_put(processor, objects_key_pattern="games/*")
+        static_site_bucket.grant_put(post_processor, objects_key_pattern="games/*")
 
-        return start_processor, pre_processor, validator, post_validator, processor
+        return (
+            start_processor,
+            pre_processor,
+            validator,
+            post_validator,
+            processor,
+            post_processor,
+        )
 
     def build_python_lambda(
         self,

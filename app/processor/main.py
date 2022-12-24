@@ -1,94 +1,55 @@
-import os
-import pathlib
-import typing
-from datetime import datetime
+import itertools
+from typing import Any
 
-import boto3
-import pytest
-from aws_lambda_powertools.utilities.data_classes import event_source, SQSEvent
-from aws_lambda_powertools.utilities.typing import LambdaContext
-
-from sneks.validator import main as sneks_validator
-
-if typing.TYPE_CHECKING:
-    from mypy_boto3_s3.service_resource import Bucket, BucketObjectsCollection
-    from mypy_boto3_s3 import S3ServiceResource
-    from mypy_boto3_stepfunctions import SFNClient
-else:
-    S3Client = object
-    S3ServiceResource = object
-    Bucket = object
-    SFNClient = object
+import processor
+import validator
 
 
-@event_source(data_class=SQSEvent)
-def start_processing(event: SQSEvent, context: LambdaContext):
-    sfn: SFNClient = boto3.client("stepfunctions")
-    sfn.start_execution(stateMachineArn=os.environ["STATE_MACHINE_ARN"])
-
-
-def process(event, context):
-    if not any(event):
-        print("no new submissions")
-        return
+def start_processing(event: dict, context):
     print(event)
+    processor.start()
 
 
-def pre_process(event: dict, context: LambdaContext):
-    s3: S3ServiceResource = boto3.resource("s3")
-    bucket: Bucket = s3.Bucket(event.get("bucket"))
-    objects: BucketObjectsCollection = bucket.objects.filter(Prefix="private/")
-    users = set()
-    for obj in objects:
-        key = obj.key
-        new_key = key.replace("private", "processing", 1)
-        # Move the new files to a processing area
-        print(f"moving {key} to {new_key}")
-        bucket.Object(new_key).copy(CopySource=dict(Bucket=bucket.name, Key=key))
-        obj.delete()
-        users.add(pathlib.PurePosixPath(new_key).parts[1])
-    return dict(
-        staged=[
-            {"prefix": f"processing/{user}/", "bucket": event.get("bucket")}
-            for user in users
-        ]
-    )
-
-
-def validate(event, context):
+def validate(event: dict, context):
     print(event)
-    s3: S3ServiceResource = boto3.resource("s3")
-    bucket: Bucket = s3.Bucket(event.get("bucket"))
-    objects: BucketObjectsCollection = bucket.objects.filter(Prefix=event.get("prefix"))
-    for obj in objects:
-        filename = f"/tmp/{obj.key}"
-        if not os.path.exists(os.path.dirname(filename)):
-            os.makedirs(os.path.dirname(filename))
-        bucket.download_file(obj.key, filename)
-
-    sneks_validator.main(test_path=f"/tmp/{event.get('prefix')}")
-
+    bucket = event.get("bucket")
+    prefix = event.get("prefix")
+    validator.run(bucket_name=bucket, prefix=prefix)
     return event
 
 
-def post_validate(event: dict, context: LambdaContext):
+def post_validate(event: dict, context) -> bool:
     print(event)
+    bucket = event.get("bucket")
+    prefix = event.get("prefix")
     success: bool = "error" not in event
-    prefix: str = event.get("prefix")
-    new_prefix = (
-        f"{prefix.replace('processing', 'invalid', 1)}"
-        f"{datetime.utcnow().isoformat(timespec='seconds')}/"
-    )
-    if success:
-        new_prefix = new_prefix.replace("invalid", "submitted", 1)
-    s3: S3ServiceResource = boto3.resource("s3")
-    bucket: Bucket = s3.Bucket(event.get("bucket"))
-    objects: BucketObjectsCollection = bucket.objects.filter(Prefix=prefix)
-    for obj in objects:
-        key = obj.key
-        new_key = key.replace(prefix, new_prefix, 1)
-        print(f"moving {key} to {new_key}")
-        bucket.Object(new_key).copy(CopySource=dict(Bucket=bucket.name, Key=key))
-        obj.delete()
+    return validator.post(bucket_name=bucket, prefix=prefix, success=success)
 
-    return success
+
+def pre_process(event: dict, context) -> dict[Any, list[dict[str, str]]]:
+    print(event)
+    bucket = event.get("bucket")
+    return processor.pre(bucket_name=bucket)
+
+
+def process(event, context) -> dict[Any, Any]:
+    print(event)
+    # TODO: turn this into a Sfn Choice
+    if not any(event):
+        print("no new submissions")
+        return dict(videos=[], scores=[], proceed=False)
+    else:
+        videos, scores = processor.run()
+        return dict(videos=videos, scores=scores, proceed=True)
+
+
+def post_process(event: dict, context):
+    print(event)
+    proceed = all(run.get("proceed") for run in event)
+    if not proceed:
+        print("nothing to post process")
+        return
+    processor.post(
+        videos=list(itertools.chain(run.get("videos") for run in event)),
+        scores=list(itertools.chain(run.get("scores") for run in event)),
+    )
