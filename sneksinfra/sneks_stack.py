@@ -7,7 +7,6 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_lambda as lambda_,
     aws_lambda_event_sources as lambda_event_sources,
-    aws_lambda_python_alpha as lambda_python,
     aws_events as events,
     aws_events_targets as targets,
     aws_sqs as sqs,
@@ -231,21 +230,12 @@ class SneksStack(Stack):
         timeout: Duration = Duration.seconds(3),
     ):
 
-        return lambda_python.PythonFunction(
+        return lambda_.DockerImageFunction(
             self,
             name,
-            runtime=lambda_.Runtime.PYTHON_3_9,
-            layers=[
-                lambda_python.PythonLayerVersion(
-                    self,
-                    f"{name}Layer",
-                    entry="./app/processor",
-                    compatible_runtimes=[lambda_.Runtime.PYTHON_3_9],
-                )
-            ],
-            entry="./app/processor",
-            index="main.py",
-            handler=handler,
+            code=lambda_.DockerImageCode.from_image_asset(
+                directory="app/processor", cmd=[f"main.{handler}"]
+            ),
             timeout=timeout,
         )
 
