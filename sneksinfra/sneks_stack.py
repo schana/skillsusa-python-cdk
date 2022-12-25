@@ -252,7 +252,10 @@ class SneksStack(Stack):
             name="PostValidatorReduce", handler="post_validate_reduce"
         )
         processor = self.build_python_lambda(
-            name="Processor", handler="process", timeout=Duration.minutes(3)
+            name="Processor",
+            handler="process",
+            timeout=Duration.minutes(3),
+            memory_size=1792,
         )
         post_processor = self.build_python_lambda(
             name="PostProcessor", handler="post_process", timeout=Duration.seconds(30)
@@ -285,15 +288,18 @@ class SneksStack(Stack):
         name: str,
         handler: str,
         timeout: Duration = Duration.seconds(3),
+        memory_size: int = 128,
     ):
 
         return lambda_.DockerImageFunction(
             self,
             name,
             code=lambda_.DockerImageCode.from_image_asset(
-                directory="app/processor", cmd=[f"main.{handler}"]
+                directory="app/processor",
+                cmd=[f"main.{handler}"],
             ),
             timeout=timeout,
+            memory_size=memory_size,
         )
 
     def build_submission_queue(
