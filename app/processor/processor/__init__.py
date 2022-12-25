@@ -55,10 +55,11 @@ def run(
 
 def post(
     videos: list[str],
-    scores: list[Score],
+    scores: list[dict],
     submission_bucket_name: str,
     static_site_bucket_name: str,
 ) -> None:
+    scores: list[Score] = [Score(**score) for score in scores]
     runner.save_manifest(
         video_names=videos,
         scores=runner.aggregate_scores(scores),

@@ -148,12 +148,17 @@ def save_manifest(
     s3: S3ServiceResource = boto3.resource("s3")
     bucket: Bucket = s3.Bucket(static_site_bucket_name)
 
-    manifest = json.loads(
-        bucket.Object("games/manifest.json").get()["Body"].read().decode("utf-8")
-    )
-    bucket.Object(f"games/manifest_{manifest['timestamp']}.json").copy(
-        CopySource=dict(Bucket=static_site_bucket_name, Key="games/manifest.json")
-    )
+    try:
+        manifest = json.loads(
+            bucket.Object("games/manifest.json").get()["Body"].read().decode("utf-8")
+        )
+        bucket.Object(f"games/manifest_{manifest['timestamp']}.json").copy(
+            CopySource=dict(Bucket=static_site_bucket_name, Key="games/manifest.json")
+        )
+    except:
+        # ignore no manifest
+        pass
+
     bucket.put_object(
         Body=json.dumps(structure).encode("utf-8"), Key="games/manifest.json"
     )
