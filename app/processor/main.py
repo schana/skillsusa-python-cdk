@@ -51,7 +51,7 @@ def post_process(event: dict, context):
     print(event)
     submission_bucket_name = event.get("submission_bucket")
     static_site_bucket_name = event.get("static_site_bucket")
-    result = event.get("result")
+    result = event.get("result").get("value")
     proceed = all(run.get("proceed") for run in result)
     if not proceed:
         print("nothing to post process")
