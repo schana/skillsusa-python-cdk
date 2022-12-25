@@ -111,6 +111,8 @@ def aggregate_scores(scores: list[Score]) -> list[Score]:
             aggregation[score.name] = Score._make(
                 map(operator.add, score, aggregation[score.name])
             )._replace(name=score.name)
+        else:
+            aggregation[score.name] = score
 
     return list(aggregation.values())
 
@@ -119,7 +121,7 @@ def save_videos(bucket_name: str) -> list[str]:
     s3: S3ServiceResource = boto3.resource("s3")
     bucket: Bucket = s3.Bucket(bucket_name)
     prefix = pathlib.Path(f"{record_prefix}/movies/")
-    videos = prefix.glob("*.mp4")
+    videos = list(prefix.glob("*.mp4"))
     for video in videos:
         print(video)
         bucket.upload_file(str(video), f"games/{video.relative_to(prefix)}")
