@@ -57,8 +57,8 @@ def post_process(event: dict, context):
         print("nothing to post process")
         return
     processor.post(
-        videos=list(itertools.chain(run.get("videos") for run in result)),
-        scores=list(itertools.chain(run.get("scores") for run in result)),
+        videos=list(itertools.chain.from_iterable(run.get("videos") for run in result)),
+        scores=list(itertools.chain.from_iterable(run.get("scores") for run in result)),
         submission_bucket_name=submission_bucket_name,
         static_site_bucket_name=static_site_bucket_name,
     )
