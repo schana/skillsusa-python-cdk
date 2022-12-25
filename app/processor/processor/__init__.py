@@ -60,18 +60,9 @@ def post(
     submission_bucket_name: str,
     static_site_bucket_name: str,
 ) -> None:
-    # Aggregate both raw values and normalized
-    aggregation: dict[str, Score] = dict()
-
-    for score in scores:
-        if score.name in aggregation:
-            aggregation[score.name] = Score._make(
-                map(operator.add, score, aggregation[score.name])
-            )._replace(name=score.name)
-
     runner.save_manifest(
         video_names=videos,
-        scores=list(aggregation.values()),
+        scores=runner.aggregate_scores(scores),
         submission_bucket_name=submission_bucket_name,
         static_site_bucket_name=static_site_bucket_name,
     )

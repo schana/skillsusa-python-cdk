@@ -1,5 +1,6 @@
 import datetime
 import json
+import operator
 import os
 import pathlib
 import typing
@@ -85,7 +86,7 @@ def run_recordings() -> None:
 def run_scoring() -> list[Score]:
     config.runs = 100
     config.graphics.display = False
-    return [
+    scores = [
         Score(
             name=s.raw.name,
             age=s.raw.age,
@@ -97,6 +98,21 @@ def run_scoring() -> list[Score]:
         )
         for s in runner.main()
     ]
+
+    return aggregate_scores(scores)
+
+
+def aggregate_scores(scores: list[Score]) -> list[Score]:
+    # Aggregate both raw values and normalized
+    aggregation: dict[str, Score] = dict()
+
+    for score in scores:
+        if score.name in aggregation:
+            aggregation[score.name] = Score._make(
+                map(operator.add, score, aggregation[score.name])
+            )._replace(name=score.name)
+
+    return list(aggregation.values())
 
 
 def save_videos(bucket_name: str) -> list[str]:
