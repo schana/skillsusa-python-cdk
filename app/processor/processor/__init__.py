@@ -45,11 +45,21 @@ def pre(bucket_name: str) -> dict[str, list[dict[str, str]]]:
     )
 
 
-def run() -> (list[str], list[Score]):
-    return runner.run()
+def run(
+    submission_bucket_name: str, static_site_bucket_name: str
+) -> (list[str], list[Score]):
+    return runner.run(
+        submission_bucket_name=submission_bucket_name,
+        static_site_bucket_name=static_site_bucket_name,
+    )
 
 
-def post(videos: list[str], scores: list[Score]) -> None:
+def post(
+    videos: list[str],
+    scores: list[Score],
+    submission_bucket_name: str,
+    static_site_bucket_name: str,
+) -> None:
     # Aggregate both raw values and normalized
     aggregation: dict[str, Score] = dict()
 
@@ -59,4 +69,9 @@ def post(videos: list[str], scores: list[Score]) -> None:
                 map(operator.add, score, aggregation[score.name])
             )._replace(name=score.name)
 
-    runner.save_manifest(video_names=videos, scores=list(aggregation.values()))
+    runner.save_manifest(
+        video_names=videos,
+        scores=list(aggregation.values()),
+        submission_bucket_name=submission_bucket_name,
+        static_site_bucket_name=static_site_bucket_name,
+    )

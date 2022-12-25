@@ -1,9 +1,23 @@
 import datetime
+import json
+import os
 import pathlib
+import typing
 from collections import namedtuple
 
 from sneks.config.config import config
 from sneks.engine import runner
+
+import boto3
+
+if typing.TYPE_CHECKING:
+    from mypy_boto3_s3.service_resource import Bucket, BucketObjectsCollection
+    from mypy_boto3_s3 import S3ServiceResource
+else:
+    S3Client = object
+    S3ServiceResource = object
+    Bucket = object
+    BucketObjectsCollection = object
 
 
 Score = namedtuple(
@@ -11,36 +25,61 @@ Score = namedtuple(
 )
 
 
-def run() -> (list[str], list[Score]):
-    get_snake_submissions()
-    copy_submissions_to_tmp()
+def run(
+    submission_bucket_name: str, static_site_bucket_name: str
+) -> (list[str], list[Score]):
+    config.registrar_prefix = "/tmp/submitted"
+    config.turn_limit = 5000
+
+    get_snake_submissions(bucket_name=submission_bucket_name)
     run_recordings()
-    videos: list[str] = save_videos()
+    videos: list[str] = save_videos(bucket_name=static_site_bucket_name)
     scores: list[Score] = run_scoring()
     return videos, scores
 
 
-def get_snake_submissions():
-    pass
+def get_snake_submissions(bucket_name: str):
+    # s3 list objects prefix
+    s3: S3ServiceResource = boto3.resource("s3")
+    bucket: Bucket = s3.Bucket(bucket_name)
+    objects: BucketObjectsCollection = bucket.objects.filter(Prefix="submitted/")
 
+    # sort by user_id, timestamp, desc
+    paths = sorted(
+        [pathlib.PurePosixPath(obj.key) for obj in objects],
+        key=lambda pure_path: pure_path.parts[1:2],
+        reverse=True,
+    )
 
-def copy_submissions_to_tmp():
-    pass
+    # get latest (user_id, timestamp) tuple for each user
+    user_latest = {}
+    for path in paths:
+        user_latest.setdefault(path.parts[1], path.parts[2])
+
+    # remove non-latest paths
+    filtered_paths = [
+        path for path in paths if path.parts[2] == user_latest.get(path.parts[1])
+    ]
+
+    for filtered_path in filtered_paths:
+        filename = f"/tmp/{filtered_path}"
+        if not os.path.exists(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
+        bucket.download_file(str(filtered_path), filename)
 
 
 def run_recordings() -> None:
     config.runs = 10
     config.graphics.display = True
     config.graphics.headless = True
-    config.graphics.delay = 0
     config.graphics.record = True
     config.graphics.record_prefix = "/tmp/output"
+
     runner.main()
 
 
 def run_scoring() -> list[Score]:
-    config.turn_limit = 5000
-    config.runs = 10
+    config.runs = 100
     config.graphics.display = False
     return [
         Score(
@@ -56,17 +95,23 @@ def run_scoring() -> list[Score]:
     ]
 
 
-def save_videos() -> list[str]:
+def save_videos(bucket_name: str) -> list[str]:
+    s3: S3ServiceResource = boto3.resource("s3")
+    bucket: Bucket = s3.Bucket(bucket_name)
     prefix = pathlib.Path("/tmp/output/movies/")
     videos = prefix.glob("*.mp4")
     for video in videos:
-        # TODO: do the s3 copy
+        bucket.upload_file(str(video), f"games/{video.relative_to(prefix)}")
         print(video)
-
     return [str(video.relative_to(prefix)) for video in videos]
 
 
-def save_manifest(video_names: list[str], scores: list[Score]) -> None:
+def save_manifest(
+    video_names: list[str],
+    scores: list[Score],
+    submission_bucket_name: str,
+    static_site_bucket_name: str,
+) -> None:
     structure = {
         "videos": [f"https://www.sneks.dev/games/{video}" for video in video_names],
         "scores": [
@@ -78,7 +123,15 @@ def save_manifest(video_names: list[str], scores: list[Score]) -> None:
         "timestamp": datetime.datetime.utcnow().isoformat(timespec="seconds"),
     }
     print(structure)
+    s3: S3ServiceResource = boto3.resource("s3")
+    bucket: Bucket = s3.Bucket(static_site_bucket_name)
 
-    # TODO:
-    # manifest.json -> manifest_<timestamp>.json
-    # new data -> manifest.json
+    manifest = json.loads(
+        bucket.Object("games/manifest.json").get()["Body"].read().decode("utf-8")
+    )
+    bucket.Object(f"games/manifest_{manifest['timestamp']}.json").copy(
+        CopySource=dict(Bucket=static_site_bucket_name, Key="games/manifest.json")
+    )
+    bucket.put_object(
+        Body=json.dumps(structure).encode("utf-8"), Key="games/manifest.json"
+    )

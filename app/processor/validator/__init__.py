@@ -24,7 +24,8 @@ def run(bucket_name: str, prefix: str) -> None:
             os.makedirs(os.path.dirname(filename))
         bucket.download_file(obj.key, filename)
 
-    sneks_validator.main(test_path=f"/tmp/{prefix}")
+    if 0 != sneks_validator.main(test_path=f"/tmp/{prefix}"):
+        raise AssertionError("invalid")
 
 
 def post(bucket_name: str, prefix: str, success: bool) -> bool:

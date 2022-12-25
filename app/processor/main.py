@@ -26,6 +26,10 @@ def post_validate(event: dict, context) -> bool:
     return validator.post(bucket_name=bucket, prefix=prefix, success=success)
 
 
+def post_validate_reduce(event: dict, context) -> bool:
+    return any(event)
+
+
 def pre_process(event: dict, context) -> dict[Any, list[dict[str, str]]]:
     print(event)
     bucket = event.get("bucket")
@@ -34,22 +38,27 @@ def pre_process(event: dict, context) -> dict[Any, list[dict[str, str]]]:
 
 def process(event, context) -> dict[Any, Any]:
     print(event)
-    # TODO: turn this into a Sfn Choice
-    if not any(event):
-        print("no new submissions")
-        return dict(videos=[], scores=[], proceed=False)
-    else:
-        videos, scores = processor.run()
-        return dict(videos=videos, scores=scores, proceed=True)
+    submission_bucket_name = event.get("submission_bucket")
+    static_site_bucket_name = event.get("static_site_bucket")
+    videos, scores = processor.run(
+        submission_bucket_name=submission_bucket_name,
+        static_site_bucket_name=static_site_bucket_name,
+    )
+    return dict(videos=videos, scores=scores, proceed=True)
 
 
 def post_process(event: dict, context):
     print(event)
-    proceed = all(run.get("proceed") for run in event)
+    submission_bucket_name = event.get("submission_bucket")
+    static_site_bucket_name = event.get("static_site_bucket")
+    result = event.get("result")
+    proceed = all(run.get("proceed") for run in result)
     if not proceed:
         print("nothing to post process")
         return
     processor.post(
-        videos=list(itertools.chain(run.get("videos") for run in event)),
-        scores=list(itertools.chain(run.get("scores") for run in event)),
+        videos=list(itertools.chain(run.get("videos") for run in result)),
+        scores=list(itertools.chain(run.get("scores") for run in result)),
+        submission_bucket_name=submission_bucket_name,
+        static_site_bucket_name=static_site_bucket_name,
     )
