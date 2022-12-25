@@ -24,11 +24,15 @@ Score = namedtuple(
     "Score", ["name", "age", "length", "ended", "age1", "length1", "ended1"]
 )
 
+working_dir_root = "/tmp"
+registrar_prefix = f"{working_dir_root}/submitted"
+record_prefix = f"{working_dir_root}/output"
+
 
 def run(
     submission_bucket_name: str, static_site_bucket_name: str
 ) -> (list[str], list[Score]):
-    config.registrar_prefix = "/tmp/submitted"
+    config.registrar_prefix = registrar_prefix
     config.turn_limit = 5000
 
     get_snake_submissions(bucket_name=submission_bucket_name)
@@ -62,7 +66,7 @@ def get_snake_submissions(bucket_name: str):
     ]
 
     for filtered_path in filtered_paths:
-        filename = f"/tmp/{filtered_path}"
+        filename = f"{working_dir_root}/{filtered_path}"
         if not os.path.exists(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
         bucket.download_file(str(filtered_path), filename)
@@ -73,7 +77,7 @@ def run_recordings() -> None:
     config.graphics.display = True
     config.graphics.headless = True
     config.graphics.record = True
-    config.graphics.record_prefix = "/tmp/output"
+    config.graphics.record_prefix = record_prefix
 
     runner.main()
 
@@ -98,11 +102,11 @@ def run_scoring() -> list[Score]:
 def save_videos(bucket_name: str) -> list[str]:
     s3: S3ServiceResource = boto3.resource("s3")
     bucket: Bucket = s3.Bucket(bucket_name)
-    prefix = pathlib.Path("/tmp/output/movies/")
+    prefix = pathlib.Path(f"{record_prefix}/movies/")
     videos = prefix.glob("*.mp4")
     for video in videos:
-        bucket.upload_file(str(video), f"games/{video.relative_to(prefix)}")
         print(video)
+        bucket.upload_file(str(video), f"games/{video.relative_to(prefix)}")
     return [str(video.relative_to(prefix)) for video in videos]
 
 

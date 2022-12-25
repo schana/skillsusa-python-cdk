@@ -138,7 +138,7 @@ class SneksStack(Stack):
             "ParallelProcess",
         )
 
-        for i in range(10):
+        for i in range(2):
             parallel_process.branch(
                 self.get_process_task(
                     identifier=f"ProcessTask{i}",
@@ -155,7 +155,7 @@ class SneksStack(Stack):
             payload=step_functions.TaskInput.from_object(
                 dict(
                     submission_bucket=submission_bucket.bucket_name,
-                    site_bucket=static_site_bucket.bucket_name,
+                    static_site_bucket=static_site_bucket.bucket_name,
                     result=step_functions.TaskInput.from_json_path_at("$"),
                 )
             ),
@@ -191,7 +191,7 @@ class SneksStack(Stack):
             payload=step_functions.TaskInput.from_object(
                 dict(
                     submission_bucket=submission_bucket.bucket_name,
-                    site_bucket=static_site_bucket.bucket_name,
+                    static_site_bucket=static_site_bucket.bucket_name,
                 )
             ),
         )
