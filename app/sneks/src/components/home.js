@@ -5,8 +5,12 @@ import * as React from "react";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 
+import Leaderboard from "./leaderboard";
+
 export default function Home() {
   const [videos, setVideos] = React.useState([]);
+  const [scores, setScores] = React.useState([]);
+  const [colors, setColors] = React.useState([]);
   const [src, setSrc] = React.useState(0);
   const videoRef = React.useRef(null);
 
@@ -15,6 +19,8 @@ export default function Home() {
       .then((response) => response.json())
       .then((responseJson) => {
         setVideos(responseJson.videos);
+        setScores(responseJson.scores);
+        setColors(responseJson.colors);
         videoRef.current.load();
       });
   }, []);
@@ -43,6 +49,7 @@ export default function Home() {
       >
         <source src={videos[src]} type="video/mp4" />
       </video>
+      <Leaderboard scores={scores} colors={colors} />
     </ContentLayout>
   );
 }
