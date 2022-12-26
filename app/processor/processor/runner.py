@@ -39,7 +39,6 @@ def run(
 ) -> (list[str], list[Score]):
     config.registrar_prefix = registrar_prefix
     config.registrar_submission_sneks = 10
-    config.turn_limit = 5000
 
     get_snake_submissions(bucket_name=submission_bucket_name)
     run_recordings()
@@ -78,6 +77,7 @@ def get_snake_submissions(bucket_name: str):
 
 def run_recordings() -> None:
     config.runs = 1
+    config.turn_limit = 2000
     config.graphics.display = True
     config.graphics.headless = True
     config.graphics.record = True
@@ -88,6 +88,7 @@ def run_recordings() -> None:
 
 def run_scoring() -> list[Score]:
     config.runs = 10
+    config.turn_limit = 5000
     config.graphics.display = False
     scores = [
         Score(
