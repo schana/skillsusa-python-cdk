@@ -56,6 +56,7 @@ class SneksStack(Stack):
                 self.format_arn(
                     service="cloudfront",
                     resource="distribution",
+                    region="",
                     resource_name=static_site.distribution.distribution_id,
                 )
             ],

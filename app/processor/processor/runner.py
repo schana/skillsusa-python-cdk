@@ -173,7 +173,7 @@ def save_manifest(
     cloudfront.create_invalidation(
         DistributionId=distribution_id,
         InvalidationBatch=InvalidationBatchTypeDef(
-            Paths=dict(Quantity=1, Items=["games/manifest.json"]),
+            Paths=dict(Quantity=1, Items=["/games/manifest.json"]),
             CallerReference=timestamp,
         ),
     )
