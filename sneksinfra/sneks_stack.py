@@ -153,7 +153,7 @@ class SneksStack(Stack):
             "ParallelProcess",
         )
 
-        for i in range(20):
+        for i in range(10):
             parallel_process.branch(
                 self.get_process_task(
                     identifier=f"ProcessTask{i}",

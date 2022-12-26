@@ -137,6 +137,14 @@ def save_manifest(
     submission_bucket_name: str,
     static_site_bucket_name: str,
 ) -> None:
+    names = sorted([score.name for score in scores])
+    color_index_delta = max(len(config.graphics.colors.snake) // len(names), 1)
+    colors = [
+        config.graphics.colors.snake[i % len(config.graphics.colors.snake)]
+        for i in range(0, color_index_delta * len(names), color_index_delta)
+    ]
+    color_map = {name: color for name, color in zip(names, colors)}
+
     timestamp = datetime.datetime.utcnow().isoformat(timespec="seconds")
     structure = {
         "videos": [f"https://www.sneks.dev/games/{video}" for video in video_names],
@@ -146,6 +154,7 @@ def save_manifest(
                 scores, key=lambda s: s.age1 + s.length1 + s.ended1, reverse=True
             )
         ],
+        "colors": color_map,
         "timestamp": timestamp,
     }
     print(structure)
