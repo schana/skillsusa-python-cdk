@@ -1,4 +1,3 @@
-import typing
 from collections import namedtuple
 
 from aws_cdk import (
@@ -18,7 +17,6 @@ from aws_cdk import (
 from constructs import Construct
 
 from sneksinfra.static_site import StaticSite
-
 
 Lambdas = namedtuple(
     "Lambdas",
