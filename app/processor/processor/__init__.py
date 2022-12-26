@@ -56,6 +56,7 @@ def run(
 def post(
     videos: list[str],
     scores: list[dict],
+    distribution_id: str,
     submission_bucket_name: str,
     static_site_bucket_name: str,
 ) -> None:
@@ -63,6 +64,7 @@ def post(
     runner.save_manifest(
         video_names=videos,
         scores=runner.aggregate_scores(scores),
+        distribution_id=distribution_id,
         submission_bucket_name=submission_bucket_name,
         static_site_bucket_name=static_site_bucket_name,
     )

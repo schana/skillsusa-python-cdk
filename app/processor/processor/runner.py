@@ -14,11 +14,14 @@ import boto3
 if typing.TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket, BucketObjectsCollection
     from mypy_boto3_s3 import S3ServiceResource
+    from mypy_boto3_cloudfront import CloudFrontClient
+    from mypy_boto3_cloudfront.type_defs import InvalidationBatchTypeDef
 else:
     S3Client = object
     S3ServiceResource = object
     Bucket = object
     BucketObjectsCollection = object
+    CloudFrontClient = object
 
 
 Score = namedtuple(
@@ -131,9 +134,11 @@ def save_videos(bucket_name: str) -> list[str]:
 def save_manifest(
     video_names: list[str],
     scores: list[Score],
+    distribution_id: str,
     submission_bucket_name: str,
     static_site_bucket_name: str,
 ) -> None:
+    timestamp = datetime.datetime.utcnow().isoformat(timespec="seconds")
     structure = {
         "videos": [f"https://www.sneks.dev/games/{video}" for video in video_names],
         "scores": [
@@ -142,7 +147,7 @@ def save_manifest(
                 scores, key=lambda s: s.age1 + s.length1 + s.ended1, reverse=True
             )
         ],
-        "timestamp": datetime.datetime.utcnow().isoformat(timespec="seconds"),
+        "timestamp": timestamp,
     }
     print(structure)
     s3: S3ServiceResource = boto3.resource("s3")
@@ -161,4 +166,13 @@ def save_manifest(
 
     bucket.put_object(
         Body=json.dumps(structure).encode("utf-8"), Key="games/manifest.json"
+    )
+
+    cloudfront: CloudFrontClient = boto3.client("cloudfront")
+    cloudfront.create_invalidation(
+        DistributionId=distribution_id,
+        InvalidationBatch=InvalidationBatchTypeDef(
+            Paths=dict(Quantity=1, Items=["games/manifest.json"]),
+            CallerReference=timestamp,
+        ),
     )

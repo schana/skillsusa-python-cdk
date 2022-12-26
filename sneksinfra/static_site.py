@@ -15,6 +15,8 @@ from constructs import Construct
 
 
 class StaticSite(Construct):
+    distribution: cloudfront.Distribution = None
+
     def __init__(
         self,
         scope: Construct,
@@ -25,7 +27,7 @@ class StaticSite(Construct):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        distribution = cloudfront.Distribution(
+        self.distribution = cloudfront.Distribution(
             self,
             "Distribution",
             domain_names=["sneks.dev", "www.sneks.dev"],
@@ -58,7 +60,7 @@ class StaticSite(Construct):
             destination_bucket=static_site_bucket,
             sources=[s3_deployment.Source.asset("app/sneks/build")],
             retain_on_delete=False,
-            distribution=distribution,
+            distribution=self.distribution,
             exclude=["games/*"],
         )
 
@@ -129,7 +131,7 @@ class StaticSite(Construct):
         CfnOutput(
             self,
             "SneksCloudFrontDomain",
-            value=distribution.distribution_domain_name,
+            value=self.distribution.distribution_domain_name,
             export_name="SneksCloudFrontDomain",
         )
 

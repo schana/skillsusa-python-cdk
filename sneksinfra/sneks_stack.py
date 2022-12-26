@@ -4,6 +4,7 @@ from aws_cdk import (
     CfnOutput,
     Stack,
     RemovalPolicy,
+    aws_iam as iam,
     aws_s3 as s3,
     aws_lambda as lambda_,
     aws_lambda_event_sources as lambda_event_sources,
@@ -47,9 +48,23 @@ class SneksStack(Stack):
 
         lambdas: Lambdas = self.get_lambdas(submission_bucket, static_site_bucket)
 
+        iam.Grant.add_to_principal(
+            scope=self,
+            actions=["cloudfront:CreateInvalidation"],
+            grantee=lambdas.post_processor,
+            resource_arns=[
+                self.format_arn(
+                    service="cloudfront",
+                    resource="distribution",
+                    resource_name=static_site.distribution.distribution_id,
+                )
+            ],
+        )
+
         self.build_submission_queue(submission_bucket, lambdas.start_processor)
 
         workflow = self.build_state_machine(
+            distribution_id=static_site.distribution.distribution_id,
             submission_bucket=submission_bucket,
             static_site_bucket=static_site_bucket,
             lambdas=lambdas,
@@ -61,6 +76,7 @@ class SneksStack(Stack):
 
     def build_state_machine(
         self,
+        distribution_id: str,
         submission_bucket: s3.Bucket,
         static_site_bucket: s3.Bucket,
         lambdas: Lambdas,
@@ -152,6 +168,7 @@ class SneksStack(Stack):
             lambda_function=lambdas.post_processor,
             payload=step_functions.TaskInput.from_object(
                 dict(
+                    distribution_id=distribution_id,
                     submission_bucket=submission_bucket.bucket_name,
                     static_site_bucket=static_site_bucket.bucket_name,
                     result=step_functions.TaskInput.from_json_path_at("$"),

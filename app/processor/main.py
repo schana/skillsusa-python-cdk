@@ -49,6 +49,7 @@ def process(event, context) -> dict[Any, Any]:
 
 def post_process(event: dict, context):
     print(event)
+    distribution_id = event.get("distribution_id")
     submission_bucket_name = event.get("submission_bucket")
     static_site_bucket_name = event.get("static_site_bucket")
     result = event.get("result").get("value")
@@ -59,6 +60,7 @@ def post_process(event: dict, context):
     processor.post(
         videos=list(itertools.chain.from_iterable(run.get("videos") for run in result)),
         scores=list(itertools.chain.from_iterable(run.get("scores") for run in result)),
+        distribution_id=distribution_id,
         submission_bucket_name=submission_bucket_name,
         static_site_bucket_name=static_site_bucket_name,
     )
