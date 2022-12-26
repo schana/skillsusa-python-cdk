@@ -15,7 +15,6 @@ export default function Leaderboard({ scores, colors }) {
       cell: (e) => (
         <div style={{ backgroundColor: `rgb(${colors[e.name]})` }}>&nbsp;</div>
       ),
-      sortingField: "color",
     },
     {
       id: "name",
@@ -26,37 +25,37 @@ export default function Leaderboard({ scores, colors }) {
     {
       id: "age",
       header: "Age",
-      cell: (e) => e.age,
+      cell: (e) => e.age.toLocaleString(),
       sortingField: "age",
     },
     {
       id: "length",
       header: "Length",
-      cell: (e) => e.length,
+      cell: (e) => e.length.toLocaleString(),
       sortingField: "length",
     },
     {
       id: "ended",
       header: "Ended",
-      cell: (e) => e.ended,
+      cell: (e) => e.ended.toLocaleString(),
       sortingField: "ended",
     },
     {
       id: "age1",
       header: "Age'",
-      cell: (e) => e.age1,
+      cell: (e) => e.age1.toLocaleString(),
       sortingField: "age1",
     },
     {
       id: "length1",
       header: "Length'",
-      cell: (e) => e.length1,
+      cell: (e) => e.length1.toLocaleString(),
       sortingField: "length1",
     },
     {
       id: "ended1",
       header: "Ended'",
-      cell: (e) => e.ended1,
+      cell: (e) => e.ended1.toLocaleString(),
       sortingField: "ended1",
     },
   ];
