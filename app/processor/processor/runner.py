@@ -22,6 +22,7 @@ else:
     Bucket = object
     BucketObjectsCollection = object
     CloudFrontClient = object
+    InvalidationBatchTypeDef = dict
 
 
 Score = namedtuple(
