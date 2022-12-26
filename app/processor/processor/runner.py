@@ -54,11 +54,9 @@ def get_snake_submissions(bucket_name: str):
     objects: BucketObjectsCollection = bucket.objects.filter(Prefix="submitted/")
 
     # sort by user_id, timestamp, desc
-    paths = sorted(
-        [pathlib.PurePosixPath(obj.key) for obj in objects],
-        key=lambda pure_path: pure_path.parts[1:2],
-        reverse=True,
-    )
+    keys = [obj.key for obj in objects]
+    keys.sort(reverse=True)
+    paths = [pathlib.PurePosixPath(key) for key in keys]
 
     # get latest (user_id, timestamp) tuple for each user
     user_latest = {}
