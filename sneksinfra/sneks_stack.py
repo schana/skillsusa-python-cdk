@@ -153,7 +153,7 @@ class SneksStack(Stack):
             "ParallelProcess",
         )
 
-        for i in range(10):
+        for i in range(40):
             parallel_process.branch(
                 self.get_process_task(
                     identifier=f"ProcessTask{i}",
@@ -254,24 +254,25 @@ class SneksStack(Stack):
     ) -> Lambdas:
         start_processor = self.build_python_lambda("StartProcessor", "start_processing")
         pre_processor = self.build_python_lambda(
-            name="PreProcessor", handler="pre_process", timeout=Duration.seconds(30)
+            name="PreProcessor", handler="pre_process", timeout=Duration.seconds(20)
         )
         validator = self.build_python_lambda(
             name="Validator",
             handler="validate",
-            timeout=Duration.seconds(30),
+            timeout=Duration.seconds(20),
         )
         post_validator = self.build_python_lambda(
-            name="PostValidator", handler="post_validate", timeout=Duration.seconds(30)
+            name="PostValidator", handler="post_validate", timeout=Duration.seconds(20)
         )
         post_validator_reduce = self.build_python_lambda(
-            name="PostValidatorReduce", handler="post_validate_reduce"
+            name="PostValidatorReduce",
+            handler="post_validate_reduce",
+            timeout=Duration.seconds(20),
         )
         processor = self.build_python_lambda(
             name="Processor",
             handler="process",
-            timeout=Duration.minutes(3),
-            memory_size=1792,
+            timeout=Duration.minutes(4),
         )
         post_processor = self.build_python_lambda(
             name="PostProcessor", handler="post_process", timeout=Duration.seconds(30)
@@ -304,7 +305,7 @@ class SneksStack(Stack):
         name: str,
         handler: str,
         timeout: Duration = Duration.seconds(3),
-        memory_size: int = 128,
+        memory_size: int = 1792,
     ):
 
         return lambda_.DockerImageFunction(
