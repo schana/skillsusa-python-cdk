@@ -24,7 +24,7 @@
 4. Build website
 
    ```
-   cd apps/sneks
+   cd app/sneks
    npm install
    npm run build
    ```
