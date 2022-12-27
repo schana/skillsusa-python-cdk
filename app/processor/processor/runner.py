@@ -1,8 +1,10 @@
 import datetime
+import hashlib
 import json
 import operator
 import os
 import pathlib
+import struct
 import typing
 from collections import namedtuple
 
@@ -145,7 +147,10 @@ def save_manifest(
         config.graphics.colors.snake[i % len(config.graphics.colors.snake)]
         for i in range(0, color_index_delta * len(names), color_index_delta)
     ]
-    color_map = {name: color for name, color in zip(names, colors)}
+    color_map = {
+        name: dict(body=color, head=get_head_color(color))
+        for name, color in zip(names, colors)
+    }
 
     timestamp = datetime.datetime.utcnow().isoformat(timespec="seconds")
     structure = {
@@ -186,3 +191,7 @@ def save_manifest(
             CallerReference=timestamp,
         ),
     )
+
+
+def get_head_color(color: tuple[int, int, int]) -> tuple[int, int, int]:
+    return struct.unpack("BBB", hashlib.md5(struct.pack("BBB", *color)).digest()[-3:])

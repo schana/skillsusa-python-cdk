@@ -13,7 +13,15 @@ export default function Leaderboard({ scores, colors }) {
       id: "color",
       header: "Color",
       cell: (e) => (
-        <div style={{ backgroundColor: `rgb(${colors[e.name]})` }}>&nbsp;</div>
+        <div
+          style={{
+            background: `linear-gradient(to right, rgb(${
+              colors[e.name].body
+            }) 75%, rgb(${colors[e.name].head}) 25%)`,
+          }}
+        >
+          &nbsp;
+        </div>
       ),
     },
     {
