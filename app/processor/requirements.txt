@@ -1,1 +1,1 @@
-sneks-dev[record]==1.0.0a10
+sneks-dev[record]==1.0.0a11
