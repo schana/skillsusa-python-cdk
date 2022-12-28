@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 import typing
@@ -21,7 +22,10 @@ else:
 
 def start() -> None:
     sfn: SFNClient = boto3.client("stepfunctions")
-    sfn.start_execution(stateMachineArn=os.environ["STATE_MACHINE_ARN"])
+    sfn.start_execution(
+        stateMachineArn=os.environ["STATE_MACHINE_ARN"],
+        input=json.dumps({"goto": "nothing"}),
+    )
 
 
 def pre(bucket_name: str) -> dict[str, list[dict[str, str]]]:
