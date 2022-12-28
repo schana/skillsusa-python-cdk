@@ -41,9 +41,8 @@ export default function Home() {
         autoPlay
         muted
         poster="poster.png"
-      >
-        <source src={videos[src]} type="video/mp4" />
-      </video>
+        src={videos.length > 0 ? videos[src] : null}
+      />
       <Leaderboard scores={scores} colors={colors} />
     </ContentLayout>
   );
