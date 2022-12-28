@@ -189,7 +189,7 @@ class SneksStack(Stack):
         )
 
         return step_functions.StateMachine(
-            self, "Workflow", definition=definition, timeout=Duration.minutes(5)
+            self, "Workflow", definition=definition, timeout=Duration.minutes(10)
         )
 
     def get_process_task(
