@@ -87,7 +87,7 @@ class SneksStack(Stack):
             self,
             "WaitForUploadComplete",
             time=step_functions.WaitTime.duration(
-                Duration.seconds(10)  # TODO: replace with Duration.minutes(5)
+                Duration.minutes(5)
             ),
         )
 

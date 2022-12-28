@@ -1,47 +1,56 @@
 import * as React from "react";
+import { useRoutes } from "react-router-dom";
+
 import HelpPanel from "@cloudscape-design/components/help-panel";
-import Icon from "@cloudscape-design/components/icon";
+import Button from "@cloudscape-design/components/button";
+import { useAuthenticator } from "@aws-amplify/ui-react";
+
+import HomeHelp from "./home-help";
+import SignInHelp from "./sign-in-help";
 
 export default function Tools() {
+  const { authStatus } = useAuthenticator((context) => [context.authStatus]);
+  const placeholder = (
+    <p>Reach out to your contest coordinator with any questions.</p>
+  );
+
+  const element = useRoutes([
+    {
+      path: "/",
+      element: <HomeHelp />,
+    },
+    {
+      path: "signin",
+      element: <SignInHelp />,
+    },
+    {
+      path: "start",
+      element: authStatus !== "authenticated" ? <SignInHelp /> : placeholder,
+    },
+    {
+      path: "submit",
+      element: authStatus !== "authenticated" ? <SignInHelp /> : placeholder,
+    },
+    {
+      path: "submissions",
+      element: authStatus !== "authenticated" ? <SignInHelp /> : placeholder,
+    },
+  ]);
+
   return (
     <HelpPanel
       footer={
-        <div>
-          <h3>
-            Learn more <Icon name="external" />
-          </h3>
-          <ul>
-            <li>
-              <a href="/">Link to documentation</a>
-            </li>
-          </ul>
-        </div>
+        <Button
+          iconName="envelope"
+          iconAlign="right"
+          href="mailto:admin@sneks.dev"
+        >
+          Email the admin
+        </Button>
       }
-      header={<h2>Help panel title (h2)</h2>}
+      header={<h2>Additional info</h2>}
     >
-      <div>
-        <p>
-          This is a paragraph with some <b>bold text</b> and also some{" "}
-          <i>italic text</i>.
-        </p>
-
-        <h3>h3 section header</h3>
-        <ul>
-          <li>Unordered list item.</li>
-        </ul>
-
-        <h4>h4 section header</h4>
-        <p>
-          Code can be formatted as lines of code or blocks of code. Add inline
-          code <code>like this</code> using a <code>{"<code>"}</code> tag.
-        </p>
-
-        <h5>h5 section header</h5>
-        <dl>
-          <dt>This is a term</dt>
-          <dd>This is its description.</dd>
-        </dl>
-      </div>
+      {element}
     </HelpPanel>
   );
 }

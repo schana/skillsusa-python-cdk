@@ -17,6 +17,7 @@ export default function Navigation() {
 
   if (authStatus === "authenticated") {
     items.push(
+      { type: "link", text: "Start", href: "/start" },
       { type: "link", text: "Submit", href: "/submit" },
       { type: "link", text: "Submissions", href: "/submissions" }
     );

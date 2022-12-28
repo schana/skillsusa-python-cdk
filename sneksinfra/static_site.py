@@ -79,11 +79,13 @@ class StaticSite(Construct):
             user_invitation=cognito.UserInvitationConfig(
                 email_subject="SkillsUSA programming challenge invite",
                 email_body=(
-                    "Dear {username},\n\n"
-                    "Welcome to the SkillsUSA programming challenge! Visit the website at https://www.sneks.dev "
-                    "to begin. You can get started by logging in with your email and this temporary password:\n"
-                    "\n{####}\n\n"
-                    "Have fun and happy coding!"
+                    "<p>Dear {username},</p>"
+                    "<p>Welcome to the Sneks programming challenge! "
+                    "Visit the website at https://www.sneks.dev/start "
+                    "to begin. You can get started by logging in with "
+                    "your email and this temporary password:</p>"
+                    "<code>{####}</code>"
+                    "<p>Have fun and happy coding!</p>"
                 ),
             ),
         )

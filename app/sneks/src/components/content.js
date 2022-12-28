@@ -3,6 +3,7 @@ import { useRoutes, Navigate } from "react-router-dom";
 
 import AuthGuard from "./authenticator";
 import Home from "./home";
+import Start from "./start";
 import Submit from "./submit";
 import Submissions from "./submissions";
 
@@ -19,6 +20,10 @@ export default function Content({ colorMode }) {
           <Navigate to="/" replace={true} />
         </AuthGuard>
       ),
+    },
+    {
+      path: "start",
+      element: <Start />,
     },
     {
       path: "submit",
