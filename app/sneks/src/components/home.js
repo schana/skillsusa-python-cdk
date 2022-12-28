@@ -40,8 +40,14 @@ export default function Home() {
         height="auto"
         autoPlay
         muted
+        playsInline
         poster="poster.png"
-        src={videos.length > 0 ? videos[src] : null}
+        src={
+          videos.length > 0
+            ? videos[src]
+            : `https://www.sneks.dev/games/game_29d61406-c7a4-41a0-884c-d6a165ac3353.mp4`
+        }
+        type="video/mp4"
       />
       <Leaderboard scores={scores} colors={colors} />
     </ContentLayout>
