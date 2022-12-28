@@ -10,12 +10,14 @@ export default function Leaderboard({ scores, colors }) {
   const { authStatus } = useAuthenticator((context) => [context.authStatus]);
 
   React.useEffect(() => {
-    Auth.currentUserCredentials()
-      .then((result) => {
-        setIdentityId(result.identityId);
-      })
-      .catch((err) => console.log(err));
-  }, []);
+    if (authStatus === "authenticated") {
+      Auth.currentUserCredentials()
+        .then((result) => {
+          setIdentityId(result.identityId);
+        })
+        .catch((err) => console.log(err));
+    }
+  }, [authStatus]);
 
   const { items, collectionProps } = useCollection(scores, {
     sorting: {},
