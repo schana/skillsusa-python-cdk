@@ -1,14 +1,42 @@
 import * as React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SideNavigation from "@cloudscape-design/components/side-navigation";
+import { useAuthenticator } from "@aws-amplify/ui-react";
 
 export default function Navigation() {
   const location = useLocation();
   const [activeHref, setActiveHref] = React.useState(location.pathname);
+  const { authStatus } = useAuthenticator((context) => [context.authStatus]);
+
   React.useEffect(() => {
     setActiveHref(location.pathname);
   }, [location]);
   const navigate = useNavigate();
+
+  const items = [{ type: "link", text: "Home", href: "/" }];
+
+  if (authStatus === "authenticated") {
+    items.push(
+      { type: "link", text: "Submit", href: "/submit" },
+      { type: "link", text: "Submissions", href: "/submissions" }
+    );
+  }
+
+  items.push(
+    { type: "divider" },
+    {
+      type: "link",
+      text: "Submission template",
+      href: "https://github.com/schana/sneks-submission",
+      external: true,
+    },
+    {
+      type: "link",
+      text: "Documentation",
+      href: "https://www.sneks.dev/docs/index.html",
+      external: true,
+    }
+  );
 
   return (
     <SideNavigation
@@ -21,19 +49,7 @@ export default function Navigation() {
           navigate(event.detail.href);
         }
       }}
-      items={[
-        { type: "link", text: "Home", href: "/" },
-        { type: "link", text: "Scores", href: "/scores" },
-        { type: "link", text: "Submit", href: "/submit" },
-        { type: "link", text: "Submissions", href: "/submissions" },
-        { type: "divider" },
-        {
-          type: "link",
-          text: "Documentation",
-          href: "https://example.com",
-          external: true,
-        },
-      ]}
+      items={items}
     />
   );
 }

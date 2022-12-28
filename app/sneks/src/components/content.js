@@ -3,7 +3,6 @@ import { useRoutes, Navigate } from "react-router-dom";
 
 import AuthGuard from "./authenticator";
 import Home from "./home";
-import Scores from "./scores";
 import Submit from "./submit";
 import Submissions from "./submissions";
 
@@ -20,10 +19,6 @@ export default function Content({ colorMode }) {
           <Navigate to="/" replace={true} />
         </AuthGuard>
       ),
-    },
-    {
-      path: "scores",
-      element: <Scores />,
     },
     {
       path: "submit",

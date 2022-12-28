@@ -2,8 +2,21 @@ import * as React from "react";
 import Table from "@cloudscape-design/components/table";
 import Box from "@cloudscape-design/components/box";
 import { useCollection } from "@cloudscape-design/collection-hooks";
+import { Auth } from "aws-amplify";
+import { useAuthenticator } from "@aws-amplify/ui-react";
 
 export default function Leaderboard({ scores, colors }) {
+  const [identityId, setIdentityId] = React.useState("not loaded");
+  const { authStatus } = useAuthenticator((context) => [context.authStatus]);
+
+  React.useEffect(() => {
+    Auth.currentUserCredentials()
+      .then((result) => {
+        setIdentityId(result.identityId);
+      })
+      .catch((err) => console.log(err));
+  }, []);
+
   const { items, collectionProps } = useCollection(scores, {
     sorting: {},
   });
@@ -24,12 +37,17 @@ export default function Leaderboard({ scores, colors }) {
         </div>
       ),
     },
-    {
+  ];
+
+  if (authStatus === "authenticated") {
+    definitions.push({
       id: "name",
       header: "Name",
-      cell: (e) => e.name.split("-").splice(6),
-      sortingField: "name",
-    },
+      cell: (e) =>
+        e.name.startsWith(identityId) ? Auth.user.attributes.email : "",
+    });
+  }
+  definitions.push(
     {
       id: "age",
       header: "Age",
@@ -65,8 +83,8 @@ export default function Leaderboard({ scores, colors }) {
       header: "Ended'",
       cell: (e) => e.ended1.toLocaleString(),
       sortingField: "ended1",
-    },
-  ];
+    }
+  );
 
   return (
     <Table

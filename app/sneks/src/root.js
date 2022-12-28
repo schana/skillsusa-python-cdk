@@ -11,10 +11,8 @@ Amplify.configure(config);
 
 export default function Root() {
   return (
-    <React.StrictMode>
-      <Authenticator.Provider>
-        <App />
-      </Authenticator.Provider>
-    </React.StrictMode>
+    <Authenticator.Provider>
+      <App />
+    </Authenticator.Provider>
   );
 }

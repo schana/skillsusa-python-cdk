@@ -22,7 +22,8 @@ export default function Home() {
         setScores(responseJson.scores);
         setColors(responseJson.colors);
         videoRef.current.load();
-      });
+      })
+      .catch((err) => console.log(err));
   }, []);
 
   const onEnded = () => {
@@ -31,13 +32,7 @@ export default function Home() {
   };
 
   return (
-    <ContentLayout
-      header={
-        <Header variant="h1" description="Latest submission runs">
-          Sneks
-        </Header>
-      }
-    >
+    <ContentLayout header={<Header />}>
       <video
         ref={videoRef}
         onEnded={onEnded}
