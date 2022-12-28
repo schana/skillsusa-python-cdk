@@ -86,9 +86,7 @@ class SneksStack(Stack):
         task_wait = step_functions.Wait(
             self,
             "WaitForUploadComplete",
-            time=step_functions.WaitTime.duration(
-                Duration.minutes(5)
-            ),
+            time=step_functions.WaitTime.duration(Duration.minutes(5)),
         )
 
         # Move new files into "staging" folder before validation
@@ -148,20 +146,29 @@ class SneksStack(Stack):
             .afterwards(include_otherwise=True)
         )
 
-        parallel_process = step_functions.Parallel(
-            self,
-            "ParallelProcess",
+        map_process_array = step_functions.Pass(
+            self, "MapProcessArray", result=step_functions.Result(list(range(40)))
         )
 
-        for i in range(40):
-            parallel_process.branch(
-                self.get_process_task(
-                    identifier=f"ProcessTask{i}",
-                    processor=lambdas.processor,
-                    submission_bucket=submission_bucket,
-                    static_site_bucket=static_site_bucket,
-                )
+        map_process = step_functions.Map(
+            self,
+            "MapProcess",
+        )
+
+        map_process.iterator(
+            tasks.LambdaInvoke(
+                self,
+                "ProcessTask",
+                lambda_function=lambdas.processor,
+                payload_response_only=True,
+                payload=step_functions.TaskInput.from_object(
+                    dict(
+                        submission_bucket=submission_bucket.bucket_name,
+                        static_site_bucket=static_site_bucket.bucket_name,
+                    )
+                ),
             )
+        )
 
         task_post_process = tasks.LambdaInvoke(
             self,
@@ -178,38 +185,39 @@ class SneksStack(Stack):
             payload_response_only=True,
         )
 
+        process_chain = (
+            map_process_array.next(map_process)
+            .next(task_post_process)
+            .next(
+                step_functions.Succeed(self, "Finished"),
+            )
+        )
+
+        choice_manual_overrides = (
+            step_functions.Choice(self, "ManualOverridesChoice")
+            .when(
+                step_functions.Condition.string_equals("$.goto", "process"),
+                process_chain,
+            )
+            .when(
+                step_functions.Condition.string_equals("$.goto", "pre-process"),
+                step_functions.Pass(self, "SkipWait"),
+            )
+            .otherwise(task_wait)
+        )
+
         definition = (
-            task_wait.next(task_pre_process)
+            choice_manual_overrides.afterwards()
+            .next(task_pre_process)
             .next(choice_post_pre_process)
             .next(task_validate_map)
             .next(task_post_validate_reduce)
             .next(choice_post_validate)
-            .next(parallel_process)
-            .next(task_post_process)
+            .next(process_chain)
         )
 
         return step_functions.StateMachine(
             self, "Workflow", definition=definition, timeout=Duration.minutes(10)
-        )
-
-    def get_process_task(
-        self,
-        identifier: str,
-        processor: lambda_.Function,
-        submission_bucket: s3.Bucket,
-        static_site_bucket: s3.Bucket,
-    ) -> tasks.LambdaInvoke:
-        return tasks.LambdaInvoke(
-            self,
-            identifier,
-            lambda_function=processor,
-            payload_response_only=True,
-            payload=step_functions.TaskInput.from_object(
-                dict(
-                    submission_bucket=submission_bucket.bucket_name,
-                    static_site_bucket=static_site_bucket.bucket_name,
-                )
-            ),
         )
 
     def get_buckets(self) -> (s3.Bucket, s3.Bucket):
