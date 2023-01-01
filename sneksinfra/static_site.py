@@ -67,12 +67,10 @@ class StaticSite(Construct):
         user_pool = cognito.UserPool(
             self,
             "UserPool",
-            # TODO: change this before going live
-            # deletion_protection=True,
-            deletion_protection=False,
-            removal_policy=RemovalPolicy.DESTROY,
+            deletion_protection=True,
             self_sign_up_enabled=False,
             sign_in_aliases=cognito.SignInAliases(email=True),
+            sign_in_case_sensitive=False,
             email=cognito.UserPoolEmail.with_cognito(
                 reply_to="admin@sneks.dev",
             ),
