@@ -3,7 +3,6 @@ from collections import namedtuple
 from aws_cdk import (
     CfnOutput,
     Stack,
-    RemovalPolicy,
     aws_iam as iam,
     aws_s3 as s3,
     aws_lambda as lambda_,
@@ -246,8 +245,6 @@ class SneksStack(Stack):
             "SubmissionBucket",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
-            removal_policy=RemovalPolicy.DESTROY,
-            auto_delete_objects=True,
             cors=[
                 s3.CorsRule(
                     allowed_headers=["*"],
@@ -264,8 +261,6 @@ class SneksStack(Stack):
             "StaticSiteBucket",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
-            removal_policy=RemovalPolicy.DESTROY,
-            auto_delete_objects=True,
         )
 
         CfnOutput(
