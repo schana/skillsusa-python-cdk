@@ -39,10 +39,8 @@ def pre_process(event: dict, context) -> dict[Any, list[dict[str, str]]]:
 def process(event, context) -> dict[Any, Any]:
     print(event)
     submission_bucket_name = event.get("submission_bucket")
-    static_site_bucket_name = event.get("static_site_bucket")
     videos, scores = processor.run(
         submission_bucket_name=submission_bucket_name,
-        static_site_bucket_name=static_site_bucket_name,
     )
     return dict(videos=videos, scores=scores, proceed=True)
 
@@ -50,7 +48,6 @@ def process(event, context) -> dict[Any, Any]:
 def post_process(event: dict, context):
     print(event)
     distribution_id = event.get("distribution_id")
-    submission_bucket_name = event.get("submission_bucket")
     static_site_bucket_name = event.get("static_site_bucket")
     result = event.get("result").get("value")
     proceed = all(run.get("proceed") for run in result)
@@ -61,6 +58,20 @@ def post_process(event: dict, context):
         videos=list(itertools.chain.from_iterable(run.get("videos") for run in result)),
         scores=list(itertools.chain.from_iterable(run.get("scores") for run in result)),
         distribution_id=distribution_id,
-        submission_bucket_name=submission_bucket_name,
         static_site_bucket_name=static_site_bucket_name,
     )
+
+
+def post_process_save(event: dict, context):
+    print(event)
+    static_site_bucket_name = event.get("static_site_bucket")
+    videos: list[dict] = event.get("videos")
+    proceed: bool = event.get("proceed")
+    scores = event.get("scores")
+    if proceed:
+        processor.post_save(
+            static_site_bucket_name=static_site_bucket_name,
+            videos=videos,
+        )
+    video_names = [video["name"] for video in videos]
+    return dict(videos=video_names, scores=scores, proceed=proceed)

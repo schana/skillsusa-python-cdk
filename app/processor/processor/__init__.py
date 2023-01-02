@@ -1,3 +1,5 @@
+import base64
+import io
 import json
 import os
 import pathlib
@@ -48,12 +50,9 @@ def pre(bucket_name: str) -> dict[str, list[dict[str, str]]]:
     )
 
 
-def run(
-    submission_bucket_name: str, static_site_bucket_name: str
-) -> (list[str], list[Score]):
+def run(submission_bucket_name: str) -> (list[str], list[Score]):
     return runner.run(
         submission_bucket_name=submission_bucket_name,
-        static_site_bucket_name=static_site_bucket_name,
     )
 
 
@@ -61,7 +60,6 @@ def post(
     videos: list[str],
     scores: list[dict],
     distribution_id: str,
-    submission_bucket_name: str,
     static_site_bucket_name: str,
 ) -> None:
     scores: list[Score] = [Score(**score) for score in scores]
@@ -69,6 +67,16 @@ def post(
         video_names=videos,
         scores=runner.aggregate_scores(scores),
         distribution_id=distribution_id,
-        submission_bucket_name=submission_bucket_name,
         static_site_bucket_name=static_site_bucket_name,
     )
+
+
+def post_save(static_site_bucket_name: str, videos: list[dict]):
+    s3: S3ServiceResource = boto3.resource("s3")
+    bucket: Bucket = s3.Bucket(static_site_bucket_name)
+    for video in videos:
+        name = video["name"]
+        data: bytes = base64.b64decode(video["data"].encode("utf-8"))
+        # TODO: validate mp4
+        buffer = io.BytesIO(data)
+        bucket.upload_fileobj(buffer, f"games/{name}")

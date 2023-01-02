@@ -28,13 +28,19 @@ export default function Navigation() {
     {
       type: "link",
       text: "Submission template",
-      href: "https://github.com/schana/sneks-submission",
+      href: "/template/template.zip",
       external: true,
     },
     {
       type: "link",
       text: "Documentation",
-      href: "https://www.sneks.dev/docs/index.html",
+      href: "/docs/index.html",
+      external: true,
+    },
+    {
+      type: "link",
+      text: "Inspiration",
+      href: "https://youtu.be/L73WY-IT2sE",
       external: true,
     }
   );

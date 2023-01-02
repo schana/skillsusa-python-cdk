@@ -1,5 +1,3 @@
-// https://youtu.be/L73WY-IT2sE
-
 import * as React from "react";
 
 import ContentLayout from "@cloudscape-design/components/content-layout";

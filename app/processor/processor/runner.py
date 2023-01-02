@@ -1,3 +1,4 @@
+import base64
 import datetime
 import hashlib
 import json
@@ -36,14 +37,12 @@ registrar_prefix = f"{working_dir_root}/submitted"
 record_prefix = f"{working_dir_root}/output"
 
 
-def run(
-    submission_bucket_name: str, static_site_bucket_name: str
-) -> (list[str], list[Score]):
+def run(submission_bucket_name: str) -> (list[str], list[Score]):
     config.registrar_prefix = registrar_prefix
 
     get_snake_submissions(bucket_name=submission_bucket_name)
     run_recordings()
-    videos: list[str] = save_videos(bucket_name=static_site_bucket_name)
+    videos: list[dict] = encode_videos()
     scores: list[Score] = run_scoring()
     return videos, scores
 
@@ -122,22 +121,25 @@ def aggregate_scores(scores: list[Score]) -> list[Score]:
     return list(aggregation.values())
 
 
-def save_videos(bucket_name: str) -> list[str]:
-    s3: S3ServiceResource = boto3.resource("s3")
-    bucket: Bucket = s3.Bucket(bucket_name)
+def encode_videos() -> list[dict]:
     prefix = pathlib.Path(f"{record_prefix}/movies/")
     videos = list(prefix.glob("*.mp4"))
+    results = []
     for video in videos:
         print(video)
-        bucket.upload_file(str(video), f"games/{video.relative_to(prefix)}")
-    return [str(video.relative_to(prefix)) for video in videos]
+        results.append(
+            dict(
+                name=str(video.relative_to(prefix)),
+                data=base64.b64encode(open(video, "rb").read()).decode("utf-8"),
+            )
+        )
+    return results
 
 
 def save_manifest(
     video_names: list[str],
     scores: list[Score],
     distribution_id: str,
-    submission_bucket_name: str,
     static_site_bucket_name: str,
 ) -> None:
     names = sorted([score.name for score in scores])

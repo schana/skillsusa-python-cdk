@@ -28,6 +28,7 @@ Lambdas = namedtuple(
         "post_validator",
         "post_validator_reduce",
         "processor",
+        "post_process_save",
         "post_processor",
     ],
 )
@@ -164,9 +165,29 @@ class SneksStack(Stack):
                 payload=step_functions.TaskInput.from_object(
                     dict(
                         submission_bucket=submission_bucket.bucket_name,
-                        static_site_bucket=static_site_bucket.bucket_name,
                     )
                 ),
+            ).next(
+                tasks.LambdaInvoke(
+                    self,
+                    "PostProcessSaveTask",
+                    lambda_function=lambdas.post_process_save,
+                    payload_response_only=True,
+                    payload=step_functions.TaskInput.from_object(
+                        dict(
+                            static_site_bucket=static_site_bucket.bucket_name,
+                            videos=step_functions.TaskInput.from_json_path_at(
+                                "$.videos"
+                            ),
+                            scores=step_functions.TaskInput.from_json_path_at(
+                                "$.scores"
+                            ),
+                            proceed=step_functions.TaskInput.from_json_path_at(
+                                "$.proceed"
+                            ),
+                        )
+                    ),
+                )
             )
         )
 
@@ -177,7 +198,6 @@ class SneksStack(Stack):
             payload=step_functions.TaskInput.from_object(
                 dict(
                     distribution_id=distribution_id,
-                    submission_bucket=submission_bucket.bucket_name,
                     static_site_bucket=static_site_bucket.bucket_name,
                     result=step_functions.TaskInput.from_json_path_at("$"),
                 )
@@ -282,6 +302,11 @@ class SneksStack(Stack):
             handler="process",
             timeout=Duration.minutes(4),
         )
+        post_process_save = self.build_python_lambda(
+            name="PostProcessSave",
+            handler="post_process_save",
+            timeout=Duration.seconds(20),
+        )
         post_processor = self.build_python_lambda(
             name="PostProcessor", handler="post_process", timeout=Duration.seconds(30)
         )
@@ -290,9 +315,8 @@ class SneksStack(Stack):
         submission_bucket.grant_read(validator, objects_key_pattern="processing/*")
         submission_bucket.grant_read_write(post_validator)
         submission_bucket.grant_read(processor, objects_key_pattern="submitted/**/*.py")
-        static_site_bucket.grant_put(processor, objects_key_pattern="games/*.mp4")
-        submission_bucket.grant_put(
-            post_processor, objects_key_pattern="submitted/**/*.json"
+        static_site_bucket.grant_put(
+            post_process_save, objects_key_pattern="games/*.mp4"
         )
         static_site_bucket.grant_read_write(
             post_processor, objects_key_pattern="games/manifest*.json"
@@ -305,6 +329,7 @@ class SneksStack(Stack):
             post_validator=post_validator,
             post_validator_reduce=post_validator_reduce,
             processor=processor,
+            post_process_save=post_process_save,
             post_processor=post_processor,
         )
 

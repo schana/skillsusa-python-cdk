@@ -11,7 +11,7 @@ import os.path
 sys.path.insert(0, os.path.abspath("../../src"))
 
 project = "Sneks"
-copyright = "2022, Nathaniel Schaaf"
+copyright = "2023, Nathaniel Schaaf"
 author = "Nathaniel Schaaf"
 
 # -- General configuration ---------------------------------------------------

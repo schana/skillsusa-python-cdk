@@ -23,11 +23,9 @@ export default function Start() {
         <Container>
           <h2>Where to begin</h2>
           <p>
-            Use the{" "}
-            <Link external href="https://github.com/schana/sneks-submission">
-              submission template
-            </Link>{" "}
-            to start making your Snek. When your Snek is ready,{" "}
+            Follow the{" "}
+            <Link href="/docs/index.html">getting started guide</Link> to start
+            making your Snek. When your Snek is ready,{" "}
             <Link href="/submit">upload</Link> your <code>submission.py</code>{" "}
             to have it evaluated.
           </p>
