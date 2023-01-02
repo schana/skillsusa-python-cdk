@@ -175,15 +175,9 @@ class SneksStack(Stack):
                     payload=step_functions.TaskInput.from_object(
                         dict(
                             static_site_bucket=static_site_bucket.bucket_name,
-                            videos=step_functions.TaskInput.from_json_path_at(
-                                "$.videos"
-                            ),
-                            scores=step_functions.TaskInput.from_json_path_at(
-                                "$.scores"
-                            ),
-                            proceed=step_functions.TaskInput.from_json_path_at(
-                                "$.proceed"
-                            ),
+                            videos=step_functions.JsonPath.object_at("$.videos"),
+                            scores=step_functions.JsonPath.object_at("$.scores"),
+                            proceed=step_functions.JsonPath.object_at("$.proceed"),
                         )
                     ),
                 )
@@ -198,7 +192,7 @@ class SneksStack(Stack):
                 dict(
                     distribution_id=distribution_id,
                     static_site_bucket=static_site_bucket.bucket_name,
-                    result=step_functions.TaskInput.from_json_path_at("$"),
+                    result=step_functions.JsonPath.object_at("$"),
                 )
             ),
             payload_response_only=True,

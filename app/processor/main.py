@@ -1,4 +1,5 @@
 import itertools
+import json
 from typing import Any
 
 import processor
@@ -42,14 +43,17 @@ def process(event, context) -> dict[Any, Any]:
     videos, scores = processor.run(
         submission_bucket_name=submission_bucket_name,
     )
-    return dict(videos=videos, scores=scores, proceed=True)
+    result = dict(videos=videos, scores=scores, proceed=True)
+    if len(json.dumps(result).encode("utf-8")) > 250 * 1024:
+        result[videos] = []
+    return result
 
 
 def post_process(event: dict, context):
     print(event)
     distribution_id = event.get("distribution_id")
     static_site_bucket_name = event.get("static_site_bucket")
-    result = event.get("result").get("value")
+    result = event.get("result")
     proceed = all(run.get("proceed") for run in result)
     if not proceed:
         print("nothing to post process")
