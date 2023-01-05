@@ -45,7 +45,7 @@ def process(event, context) -> dict[Any, Any]:
     )
     result = dict(videos=videos, scores=scores, proceed=True)
     if len(json.dumps(result).encode("utf-8")) > 250 * 1024:
-        result[videos] = []
+        result["videos"] = []
     return result
 
 
