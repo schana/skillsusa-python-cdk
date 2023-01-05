@@ -19,6 +19,7 @@ export default function Home() {
         setVideos(responseJson.videos);
         setScores(responseJson.scores);
         setColors(responseJson.colors);
+        setSrc(Math.floor(Math.random() * responseJson.videos.length));
         videoRef.current.load();
       })
       .catch((err) => console.log(err));
