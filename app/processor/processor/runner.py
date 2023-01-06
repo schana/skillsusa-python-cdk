@@ -77,7 +77,6 @@ def get_snake_submissions(bucket_name: str):
 
 def run_recordings() -> None:
     config.runs = 1
-    config.turn_limit = 1000
     config.graphics.display = True
     config.graphics.headless = True
     config.graphics.record = True
@@ -88,7 +87,6 @@ def run_recordings() -> None:
 
 def run_scoring() -> list[Score]:
     config.runs = 10
-    config.turn_limit = 2000
     config.graphics.display = False
     scores = [
         Score(
