@@ -276,7 +276,7 @@ class SneksStack(Stack):
         validator = self.build_python_lambda(
             name="Validator",
             handler="validate",
-            timeout=Duration.seconds(20),
+            timeout=Duration.seconds(40),
         )
         post_validator = self.build_python_lambda(
             name="PostValidator", handler="post_validate", timeout=Duration.seconds(20)
