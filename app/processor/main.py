@@ -1,5 +1,4 @@
 import itertools
-import json
 from typing import Any
 
 import processor
@@ -44,8 +43,18 @@ def process(event, context) -> dict[Any, Any]:
         submission_bucket_name=submission_bucket_name,
     )
     result = dict(videos=videos, scores=scores, proceed=True)
-    if len(json.dumps(result).encode("utf-8")) > 250 * 1024:
-        result["videos"] = []
+    return result
+
+
+def record(event, context) -> dict[Any, Any]:
+    print(event)
+    submission_bucket_name = event.get("submission_bucket")
+    video_bucket_name = event.get("video_bucket")
+    videos, scores = processor.record(
+        submission_bucket_name=submission_bucket_name,
+        video_bucket_name=video_bucket_name,
+    )
+    result = dict(videos=videos, scores=scores, proceed=True)
     return result
 
 
@@ -68,14 +77,20 @@ def post_process(event: dict, context):
 
 def post_process_save(event: dict, context):
     print(event)
+    video_bucket_name = event.get("video_bucket")
     static_site_bucket_name = event.get("static_site_bucket")
-    videos: list[dict] = event.get("videos")
-    proceed: bool = event.get("proceed")
-    scores = event.get("scores")
+    result = event.get("result")
+    proceed: bool = all(run.get("proceed") for run in result)
+    videos: list[str] = list(
+        itertools.chain.from_iterable(run.get("videos") for run in result)
+    )
+    scores: list[dict] = list(
+        itertools.chain.from_iterable(run.get("scores") for run in result)
+    )
     if proceed:
         processor.post_save(
+            video_bucket_name=video_bucket_name,
             static_site_bucket_name=static_site_bucket_name,
             videos=videos,
         )
-    video_names = [video["name"] for video in videos]
-    return dict(videos=video_names, scores=scores, proceed=proceed)
+    return dict(videos=videos, scores=scores, proceed=proceed)

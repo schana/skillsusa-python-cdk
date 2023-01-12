@@ -13,6 +13,7 @@ from aws_cdk import (
     aws_stepfunctions as step_functions,
     aws_stepfunctions_tasks as tasks,
     Duration,
+    RemovalPolicy,
 )
 from constructs import Construct
 
@@ -27,6 +28,7 @@ Lambdas = namedtuple(
         "post_validator",
         "post_validator_reduce",
         "processor",
+        "recorder",
         "post_process_save",
         "post_processor",
     ],
@@ -37,7 +39,7 @@ class SneksStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        submission_bucket, static_site_bucket = self.get_buckets()
+        submission_bucket, video_bucket, static_site_bucket = self.get_buckets()
 
         static_site = StaticSite(
             self,
@@ -46,7 +48,9 @@ class SneksStack(Stack):
             static_site_bucket=static_site_bucket,
         )
 
-        lambdas: Lambdas = self.get_lambdas(submission_bucket, static_site_bucket)
+        lambdas: Lambdas = self.get_lambdas(
+            submission_bucket, video_bucket, static_site_bucket
+        )
 
         iam.Grant.add_to_principal(
             scope=self,
@@ -67,6 +71,7 @@ class SneksStack(Stack):
         workflow = self.build_state_machine(
             distribution_id=static_site.distribution.distribution_id,
             submission_bucket=submission_bucket,
+            video_bucket=video_bucket,
             static_site_bucket=static_site_bucket,
             lambdas=lambdas,
         )
@@ -79,6 +84,7 @@ class SneksStack(Stack):
         self,
         distribution_id: str,
         submission_bucket: s3.Bucket,
+        video_bucket: s3.Bucket,
         static_site_bucket: s3.Bucket,
         lambdas: Lambdas,
     ) -> step_functions.StateMachine:
@@ -147,7 +153,9 @@ class SneksStack(Stack):
         )
 
         map_process_array = step_functions.Pass(
-            self, "MapProcessArray", result=step_functions.Result(list(range(40)))
+            self,
+            "MapProcessArray",
+            result=step_functions.Result(list(range(20))),
         )
 
         map_process = step_functions.Map(
@@ -156,17 +164,35 @@ class SneksStack(Stack):
         )
 
         map_process.iterator(
-            tasks.LambdaInvoke(
-                self,
-                "ProcessTask",
-                lambda_function=lambdas.processor,
-                payload_response_only=True,
-                payload=step_functions.TaskInput.from_object(
-                    dict(
-                        submission_bucket=submission_bucket.bucket_name,
-                    )
-                ),
-            ).next(
+            step_functions.Parallel(self, "ParallelProcess")
+            .branch(
+                tasks.LambdaInvoke(
+                    self,
+                    "ProcessTask",
+                    lambda_function=lambdas.processor,
+                    payload_response_only=True,
+                    payload=step_functions.TaskInput.from_object(
+                        dict(
+                            submission_bucket=submission_bucket.bucket_name,
+                        )
+                    ),
+                )
+            )
+            .branch(
+                tasks.LambdaInvoke(
+                    self,
+                    "RecordTask",
+                    lambda_function=lambdas.recorder,
+                    payload_response_only=True,
+                    payload=step_functions.TaskInput.from_object(
+                        dict(
+                            submission_bucket=submission_bucket.bucket_name,
+                            video_bucket=video_bucket.bucket_name,
+                        )
+                    ),
+                )
+            )
+            .next(
                 tasks.LambdaInvoke(
                     self,
                     "PostProcessSaveTask",
@@ -174,10 +200,9 @@ class SneksStack(Stack):
                     payload_response_only=True,
                     payload=step_functions.TaskInput.from_object(
                         dict(
+                            video_bucket=video_bucket.bucket_name,
                             static_site_bucket=static_site_bucket.bucket_name,
-                            videos=step_functions.JsonPath.object_at("$.videos"),
-                            scores=step_functions.JsonPath.object_at("$.scores"),
-                            proceed=step_functions.JsonPath.object_at("$.proceed"),
+                            result=step_functions.JsonPath.object_at("$"),
                         )
                     ),
                 )
@@ -233,7 +258,7 @@ class SneksStack(Stack):
             self, "Workflow", definition=definition, timeout=Duration.minutes(10)
         )
 
-    def get_buckets(self) -> (s3.Bucket, s3.Bucket):
+    def get_buckets(self) -> (s3.Bucket, s3.Bucket, s3.Bucket):
         submission_bucket = s3.Bucket(
             self,
             "SubmissionBucket",
@@ -250,6 +275,18 @@ class SneksStack(Stack):
             transfer_acceleration=True,
         )
 
+        video_bucket = s3.Bucket(
+            self,
+            "VideoBucket",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
+            lifecycle_rules=[
+                s3.LifecycleRule(expiration=Duration.days(1)),
+            ],
+        )
+
         static_site_bucket = s3.Bucket(
             self,
             "StaticSiteBucket",
@@ -264,10 +301,13 @@ class SneksStack(Stack):
             export_name="SneksSubmissionBucket",
         )
 
-        return submission_bucket, static_site_bucket
+        return submission_bucket, video_bucket, static_site_bucket
 
     def get_lambdas(
-        self, submission_bucket: s3.Bucket, static_site_bucket: s3.Bucket
+        self,
+        submission_bucket: s3.Bucket,
+        video_bucket: s3.Bucket,
+        static_site_bucket: s3.Bucket,
     ) -> Lambdas:
         start_processor = self.build_python_lambda("StartProcessor", "start_processing")
         pre_processor = self.build_python_lambda(
@@ -290,6 +330,12 @@ class SneksStack(Stack):
             name="Processor",
             handler="process",
             timeout=Duration.minutes(4),
+            use_pypy=True,
+        )
+        recorder = self.build_python_lambda(
+            name="Recorder",
+            handler="record",
+            timeout=Duration.minutes(4),
         )
         post_process_save = self.build_python_lambda(
             name="PostProcessSave",
@@ -304,7 +350,13 @@ class SneksStack(Stack):
         submission_bucket.grant_read(validator, objects_key_pattern="processing/*")
         submission_bucket.grant_read_write(post_validator)
         submission_bucket.grant_read(processor, objects_key_pattern="submitted/**/*.py")
+        submission_bucket.grant_read(recorder, objects_key_pattern="submitted/**/*.py")
+        video_bucket.grant_put(recorder, objects_key_pattern="games/*.mp4")
+        video_bucket.grant_read(post_process_save, objects_key_pattern="games/*.mp4")
         static_site_bucket.grant_put(
+            post_process_save, objects_key_pattern="games/*.mp4"
+        )
+        static_site_bucket.grant_read(
             post_process_save, objects_key_pattern="games/*.mp4"
         )
         static_site_bucket.grant_read_write(
@@ -318,6 +370,7 @@ class SneksStack(Stack):
             post_validator=post_validator,
             post_validator_reduce=post_validator_reduce,
             processor=processor,
+            recorder=recorder,
             post_process_save=post_process_save,
             post_processor=post_processor,
         )
@@ -326,15 +379,20 @@ class SneksStack(Stack):
         self,
         name: str,
         handler: str,
+        use_pypy: bool = False,
         timeout: Duration = Duration.seconds(3),
         memory_size: int = 1792,
     ):
+        entrypoint = None
+        if use_pypy:
+            entrypoint = ["pypy", "-m", "awslambdaric"]
 
         return lambda_.DockerImageFunction(
             self,
             name,
             code=lambda_.DockerImageCode.from_image_asset(
                 directory="app/processor",
+                entrypoint=entrypoint,
                 cmd=[f"main.{handler}"],
             ),
             timeout=timeout,

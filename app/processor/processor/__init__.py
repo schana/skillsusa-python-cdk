@@ -1,14 +1,13 @@
-import base64
-import io
 import json
 import os
 import pathlib
 import typing
 
 import boto3
+import botocore.exceptions
+from processor.runner import Score
 
 from processor import runner
-from processor.runner import Score
 
 if typing.TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket, BucketObjectsCollection
@@ -56,6 +55,15 @@ def run(submission_bucket_name: str) -> (list[str], list[Score]):
     )
 
 
+def record(
+    submission_bucket_name: str, video_bucket_name: str
+) -> (list[str], list[Score]):
+    return runner.record(
+        submission_bucket_name=submission_bucket_name,
+        video_bucket_name=video_bucket_name,
+    )
+
+
 def post(
     videos: list[str],
     scores: list[dict],
@@ -71,12 +79,21 @@ def post(
     )
 
 
-def post_save(static_site_bucket_name: str, videos: list[dict]):
+def post_save(video_bucket_name: str, static_site_bucket_name: str, videos: list[str]):
     s3: S3ServiceResource = boto3.resource("s3")
     bucket: Bucket = s3.Bucket(static_site_bucket_name)
     for video in videos:
-        name = video["name"]
-        data: bytes = base64.b64decode(video["data"].encode("utf-8"))
+        key = f"games/{video}"
+        # check if object exists
+        try:
+            bucket.Object(key).load()
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                pass
+            else:
+                raise
+        else:
+            raise Exception("trying to overwrite existing file")
+
         # TODO: validate mp4
-        buffer = io.BytesIO(data)
-        bucket.upload_fileobj(buffer, f"games/{name}")
+        bucket.copy(CopySource={"Bucket": video_bucket_name, "Key": key}, Key=key)

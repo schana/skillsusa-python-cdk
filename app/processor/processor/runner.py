@@ -1,4 +1,3 @@
-import base64
 import datetime
 import hashlib
 import json
@@ -9,10 +8,9 @@ import struct
 import typing
 from collections import namedtuple
 
+import boto3
 from sneks.config.config import config
 from sneks.engine import runner
-
-import boto3
 
 if typing.TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket, BucketObjectsCollection
@@ -41,9 +39,20 @@ def run(submission_bucket_name: str) -> (list[str], list[Score]):
     config.registrar_prefix = registrar_prefix
 
     get_snake_submissions(bucket_name=submission_bucket_name)
-    run_recordings()
-    videos: list[dict] = encode_videos()
+    videos: list[dict] = []
     scores: list[Score] = run_scoring()
+    return videos, scores
+
+
+def record(
+    submission_bucket_name: str, video_bucket_name: str
+) -> (list[str], list[Score]):
+    config.registrar_prefix = registrar_prefix
+
+    get_snake_submissions(bucket_name=submission_bucket_name)
+    run_recordings()
+    videos: list[str] = encode_videos(video_bucket_name)
+    scores: list[Score] = []
     return videos, scores
 
 
@@ -119,18 +128,18 @@ def aggregate_scores(scores: list[Score]) -> list[Score]:
     return list(aggregation.values())
 
 
-def encode_videos() -> list[dict]:
+def encode_videos(video_bucket_name) -> list[str]:
+    s3: S3ServiceResource = boto3.resource("s3")
+    bucket: Bucket = s3.Bucket(video_bucket_name)
     prefix = pathlib.Path(f"{record_prefix}/movies/")
     videos = list(prefix.glob("*.mp4"))
     results = []
     for video in videos:
         print(video)
-        results.append(
-            dict(
-                name=str(video.relative_to(prefix)),
-                data=base64.b64encode(open(video, "rb").read()).decode("utf-8"),
-            )
-        )
+        name = str(video.relative_to(prefix))
+        results.append(name)
+        with open(video, "rb") as f:
+            bucket.upload_fileobj(f, f"games/{name}")
     return results
 
 
