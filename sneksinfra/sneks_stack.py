@@ -5,6 +5,7 @@ from aws_cdk import (
     Stack,
     aws_iam as iam,
     aws_s3 as s3,
+    aws_sns as sns,
     aws_lambda as lambda_,
     aws_lambda_event_sources as lambda_event_sources,
     aws_events as events,
@@ -22,6 +23,7 @@ from sneksinfra.static_site import StaticSite
 Lambdas = namedtuple(
     "Lambdas",
     [
+        "notifier",
         "start_processor",
         "pre_processor",
         "validator",
@@ -48,8 +50,21 @@ class SneksStack(Stack):
             static_site_bucket=static_site_bucket,
         )
 
+        notification_topic = sns.Topic(
+            self,
+            "NotificationTopic",
+        )
+
+        sns.Subscription(
+            self,
+            "NotificationSubscription",
+            topic=notification_topic,
+            endpoint="admin@sneks.dev",
+            protocol=sns.SubscriptionProtocol.EMAIL,
+        )
+
         lambdas: Lambdas = self.get_lambdas(
-            submission_bucket, video_bucket, static_site_bucket
+            submission_bucket, video_bucket, static_site_bucket, notification_topic
         )
 
         iam.Grant.add_to_principal(
@@ -79,6 +94,19 @@ class SneksStack(Stack):
             "STATE_MACHINE_ARN", workflow.state_machine_arn
         )
         workflow.grant_start_execution(lambdas.start_processor)
+
+        rule = events.Rule(
+            self,
+            "WorkflowStatusRule",
+            enabled=True,
+            event_pattern=events.EventPattern(
+                source=["aws.states"],
+                detail_type=["Step Functions Execution Status Change"],
+                detail={"stateMachineArn": [workflow.state_machine_arn]},
+            ),
+        )
+
+        rule.add_target(target=targets.LambdaFunction(handler=lambdas.notifier))
 
     def build_state_machine(
         self,
@@ -308,7 +336,13 @@ class SneksStack(Stack):
         submission_bucket: s3.Bucket,
         video_bucket: s3.Bucket,
         static_site_bucket: s3.Bucket,
+        notification_topic: sns.Topic,
     ) -> Lambdas:
+        notifier = self.build_python_lambda("Notifier", "send_notification")
+        notifier.add_environment(
+            key="sns_topic_arn", value=notification_topic.topic_arn
+        )
+        notification_topic.grant_publish(notifier)
         start_processor = self.build_python_lambda("StartProcessor", "start_processing")
         pre_processor = self.build_python_lambda(
             name="PreProcessor", handler="pre_process", timeout=Duration.seconds(20)
@@ -317,6 +351,7 @@ class SneksStack(Stack):
             name="Validator",
             handler="validate",
             timeout=Duration.seconds(40),
+            use_pypy=True,
         )
         post_validator = self.build_python_lambda(
             name="PostValidator", handler="post_validate", timeout=Duration.seconds(20)
@@ -364,6 +399,7 @@ class SneksStack(Stack):
         )
 
         return Lambdas(
+            notifier=notifier,
             start_processor=start_processor,
             pre_processor=pre_processor,
             validator=validator,

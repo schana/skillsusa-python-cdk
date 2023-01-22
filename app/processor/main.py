@@ -3,6 +3,12 @@ from typing import Any
 
 import processor
 import validator
+import notifier
+
+
+def send_notification(event: dict, context):
+    print(event)
+    notifier.send(event)
 
 
 def start_processing(event: dict, context):
