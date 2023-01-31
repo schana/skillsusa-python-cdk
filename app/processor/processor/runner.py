@@ -6,6 +6,7 @@ import os
 import pathlib
 import struct
 import typing
+import random
 from collections import namedtuple
 
 import boto3
@@ -85,6 +86,9 @@ def get_snake_submissions(bucket_name: str):
 
 
 def run_recordings() -> None:
+    # Seed random to prevent uuid4 collisions due to lambda optimizations?
+    random.seed()
+
     config.runs = 1
     config.graphics.display = True
     config.graphics.headless = True
