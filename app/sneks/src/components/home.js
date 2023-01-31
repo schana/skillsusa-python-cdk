@@ -9,6 +9,7 @@ export default function Home() {
   const [videos, setVideos] = React.useState([]);
   const [scores, setScores] = React.useState([]);
   const [colors, setColors] = React.useState([]);
+  const [timestamp, setTimestamp] = React.useState([]);
   const [src, setSrc] = React.useState(0);
   const videoRef = React.useRef(null);
 
@@ -19,6 +20,9 @@ export default function Home() {
         setVideos(responseJson.videos);
         setScores(responseJson.scores);
         setColors(responseJson.colors);
+        setTimestamp(
+          new Date(`${responseJson.timestamp}+0000`).toLocaleString()
+        );
         setSrc(Math.floor(Math.random() * responseJson.videos.length));
         videoRef.current.load();
       })
@@ -48,7 +52,7 @@ export default function Home() {
         }
         type="video/mp4"
       />
-      <Leaderboard scores={scores} colors={colors} />
+      <Leaderboard scores={scores} colors={colors} timestamp={timestamp} />
     </ContentLayout>
   );
 }

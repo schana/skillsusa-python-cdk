@@ -5,7 +5,7 @@ import { useCollection } from "@cloudscape-design/collection-hooks";
 import { Auth } from "aws-amplify";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 
-export default function Leaderboard({ scores, colors }) {
+export default function Leaderboard({ scores, colors, timestamp }) {
   const [identityId, setIdentityId] = React.useState("not loaded");
   const { authStatus } = useAuthenticator((context) => [context.authStatus]);
 
@@ -85,6 +85,12 @@ export default function Leaderboard({ scores, colors }) {
       header: "Ended'",
       cell: (e) => e.ended1.toLocaleString(),
       sortingField: "ended1",
+    },
+    {
+      id: "score",
+      header: "Score",
+      cell: (e) => (e.age1 + e.length1 + e.ended1).toLocaleString(),
+      sortingField: "score",
     }
   );
 
@@ -103,6 +109,7 @@ export default function Leaderboard({ scores, colors }) {
           </Box>
         </Box>
       }
+      footer={<Box>Last updated: {timestamp}</Box>}
     />
   );
 }

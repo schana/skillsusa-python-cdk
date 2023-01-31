@@ -116,6 +116,7 @@ def run_scoring() -> list[Score]:
 def aggregate_scores(scores: list[Score]) -> list[Score]:
     # Aggregate both raw values and normalized
     aggregation: dict[str, Score] = dict()
+    counts: dict[str, int] = dict()
 
     for score in scores:
         if score.name in aggregation:
@@ -124,6 +125,19 @@ def aggregate_scores(scores: list[Score]) -> list[Score]:
             )._replace(name=score.name)
         else:
             aggregation[score.name] = score
+        counts[score.name] = counts.get(score.name, 0) + 1
+    for name in aggregation:
+        score = aggregation[name]
+        count = counts[name]
+        aggregation[name] = Score(
+            name=name,
+            age=score.age / count,
+            length=score.length / count,
+            ended=score.ended / count,
+            age1=score.age1 / count,
+            length1=score.length1 / count,
+            ended1=score.ended1 / count,
+        )
 
     return list(aggregation.values())
 
