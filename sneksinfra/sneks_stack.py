@@ -364,7 +364,7 @@ class SneksStack(Stack):
         processor = self.build_python_lambda(
             name="Processor",
             handler="process",
-            timeout=Duration.minutes(4),
+            timeout=Duration.minutes(5),
             use_pypy=True,
         )
         recorder = self.build_python_lambda(

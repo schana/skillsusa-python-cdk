@@ -93,7 +93,7 @@ def post_save(video_bucket_name: str, static_site_bucket_name: str, videos: list
             else:
                 raise
         else:
-            raise Exception("trying to overwrite existing file")
+            raise Exception(f"trying to overwrite existing file: {video}")
 
         # TODO: validate mp4
         bucket.copy(CopySource={"Bucket": video_bucket_name, "Key": key}, Key=key)

@@ -1,5 +1,6 @@
 import itertools
 from typing import Any
+import random
 
 import processor
 import validator
@@ -54,6 +55,8 @@ def process(event, context) -> dict[Any, Any]:
 
 def record(event, context) -> dict[Any, Any]:
     print(event)
+    # Seed random to prevent uuid4 collisions due to lambda optimizations?
+    random.seed(context.aws_request_id)
     submission_bucket_name = event.get("submission_bucket")
     video_bucket_name = event.get("video_bucket")
     videos, scores = processor.record(
