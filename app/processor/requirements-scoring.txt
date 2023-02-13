@@ -1,2 +1,2 @@
-sneks-dev==1.0.0a19
+sneks-dev==1.0.0
 boto3
