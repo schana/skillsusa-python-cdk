@@ -95,7 +95,7 @@ def run_recordings() -> None:
 
 
 def run_scoring() -> list[Score]:
-    config.runs = 10
+    config.runs = 1
     config.graphics.display = False
     scores = [
         Score(
