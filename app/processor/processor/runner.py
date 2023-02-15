@@ -15,15 +15,10 @@ from sneks.engine import runner
 if typing.TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket, BucketObjectsCollection
     from mypy_boto3_s3 import S3ServiceResource
-    from mypy_boto3_cloudfront import CloudFrontClient
-    from mypy_boto3_cloudfront.type_defs import InvalidationBatchTypeDef
 else:
-    S3Client = object
     S3ServiceResource = object
     Bucket = object
     BucketObjectsCollection = object
-    CloudFrontClient = object
-    InvalidationBatchTypeDef = dict
 
 
 Score = namedtuple(
@@ -150,7 +145,7 @@ def encode_videos(video_bucket_name) -> list[str]:
     results = []
     for video in videos:
         print(video)
-        name = str(video.relative_to(prefix))
+        name = f"{datetime.datetime.utcnow().timestamp()}_{video.relative_to(prefix)}"
         results.append(name)
         with open(video, "rb") as f:
             bucket.upload_fileobj(f, f"games/{name}")
@@ -203,15 +198,6 @@ def save_manifest(
 
     bucket.put_object(
         Body=json.dumps(structure).encode("utf-8"), Key="games/manifest.json"
-    )
-
-    cloudfront: CloudFrontClient = boto3.client("cloudfront")
-    cloudfront.create_invalidation(
-        DistributionId=distribution_id,
-        InvalidationBatch=InvalidationBatchTypeDef(
-            Paths=dict(Quantity=1, Items=["/games/manifest.json"]),
-            CallerReference=timestamp,
-        ),
     )
 
 

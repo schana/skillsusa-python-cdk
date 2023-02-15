@@ -251,9 +251,50 @@ class SneksStack(Stack):
             payload_response_only=True,
         )
 
+        task_cloudfront_invalidation = tasks.CallAwsService(
+            self,
+            "InvalidateManifest",
+            service="cloudfront",
+            action="createInvalidation",
+            parameters={
+                "DistributionId": distribution_id,
+                "InvalidationBatch": {
+                    "CallerReference.$": "$$.Execution.StartTime",
+                    "Paths": {
+                        "Items": ["/games/manifest.json"],
+                        "Quantity": 1,
+                    },
+                },
+            },
+            iam_resources=[
+                self.format_arn(
+                    service="cloudfront",
+                    resource="distribution",
+                    region="",
+                    resource_name=distribution_id,
+                )
+            ],
+            additional_iam_statements=[
+                iam.PolicyStatement(
+                    actions=["cloudfront:CreateInvalidation"],
+                    resources=[
+                        self.format_arn(
+                            service="cloudfront",
+                            resource="distribution",
+                            region="",
+                            resource_name=distribution_id,
+                        )
+                    ],
+                )
+            ],
+        )
+
+        task_cloudfront_invalidation.add_retry(max_attempts=5)
+
         process_chain = (
             map_process_array.next(map_process)
             .next(task_post_process)
+            .next(task_cloudfront_invalidation)
             .next(
                 step_functions.Succeed(self, "Finished"),
             )
