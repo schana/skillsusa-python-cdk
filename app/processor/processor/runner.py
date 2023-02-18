@@ -4,6 +4,7 @@ import json
 import operator
 import os
 import pathlib
+import shutil
 import struct
 import typing
 from collections import namedtuple
@@ -32,6 +33,7 @@ record_prefix = f"{working_dir_root}/output"
 
 def run(submission_bucket_name: str) -> (list[str], list[Score]):
     config.registrar_prefix = registrar_prefix
+    shutil.rmtree(registrar_prefix, ignore_errors=True)
 
     get_snake_submissions(bucket_name=submission_bucket_name)
     videos: list[dict] = []
@@ -43,6 +45,8 @@ def record(
     submission_bucket_name: str, video_bucket_name: str
 ) -> (list[str], list[Score]):
     config.registrar_prefix = registrar_prefix
+    shutil.rmtree(registrar_prefix, ignore_errors=True)
+    shutil.rmtree(record_prefix, ignore_errors=True)
 
     get_snake_submissions(bucket_name=submission_bucket_name)
     run_recordings()

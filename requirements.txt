@@ -6,7 +6,7 @@ boto3-stubs-lite[essential]
 boto3-stubs-lite[stepfunctions]
 boto3-stubs-lite[cloudfront]
 boto3-stubs-lite[sns]
-sneks-dev[record]==1.0.0
+sneks-dev[record]==1.0.1
 sphinx
 sphinx_rtd_theme
 requests
