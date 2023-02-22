@@ -504,8 +504,10 @@ class SneksStack(Stack):
                 source=["aws.s3"],
                 detail_type=["Object Created"],
                 resources=[submission_bucket.bucket_arn],
-                # Enough to distinguish for now, may have to add prefix later if we start putting files
-                detail=dict(reason=["PutObject"]),
+                detail={
+                    "reason": ["PutObject"],
+                    "object": {"key": [{"prefix": "private"}]},
+                },
             ),
         )
 
