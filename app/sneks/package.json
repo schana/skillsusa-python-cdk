@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@aws-amplify/auth": "^5.1.0",
-    "@aws-amplify/storage": "^5.0.6",
+    "@aws-amplify/storage": "^5.9.5",
     "@aws-amplify/ui-react": "^4.2.1",
     "@cloudscape-design/collection-hooks": "^1.0.16",
     "@cloudscape-design/components": "^3.0.145",
@@ -12,7 +12,7 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "aws-amplify": "^5.0.6",
+    "aws-amplify": "^5.3.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.5.0",
